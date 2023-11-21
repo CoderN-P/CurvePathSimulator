@@ -10,6 +10,7 @@ class QGraphicsView;
 class QGraphicsScene;
 class QuinticHermiteSpline;
 class QSlider;
+class QLineEdit;
 
 
 class MainWindow : public QWidget
@@ -37,6 +38,15 @@ private:
     QLabel* portLabel_{};
     QSlider* zoomSlider_{};
     QSlider* panSlider_{};
+    QLineEdit* startRange_{};
+    QLineEdit* endRange_{};
+    QLabel* zoomLabel_{};
+    QLabel* panLabel_{};
+    QLabel* startRangeLabel_{};
+    QLabel* endRangeLabel_{};
+    QSlider* resolution_{};
+    QLabel* resolutionLabel_{};
+
 
 public:
     QGraphicsView* graphicsView_{};

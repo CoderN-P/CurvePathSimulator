@@ -11,7 +11,7 @@
 double QuinticHermiteSpline::evaluatePoint(double t, const double (*customBasisFunctions)[6][6]) {
     double order[6] = { start, startVelocity, startAcceleration, endAcceleration, endVelocity, end };
     double x = 0;
-    /*
+
     for (int i = 0; i < 6; i++){
         double temp = 0;
         for (int j = 0; j < 6; j++){
@@ -21,9 +21,6 @@ double QuinticHermiteSpline::evaluatePoint(double t, const double (*customBasisF
     }
 
     return x;
-     */
-    return t*t;
-
 }
 
 double QuinticHermiteSpline::evaluateDerivative(double t, int order) {

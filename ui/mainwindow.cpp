@@ -2,6 +2,8 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QLineEdit>
 #include "../classes/QuinticHermiteSpline.h"
 #include "mainwindow.h"
 
@@ -39,29 +41,67 @@ MainWindow::MainWindow(QWidget *parent)
                                    QSize(400, 50)));
     zoomSlider_->setRange(1, 10);
 
+    zoomLabel_ = new QLabel(tr("Zoom: "), this);
+    zoomLabel_->setGeometry(QRect(QPoint(10, 1000),
+                                  QSize(100, 50)));
+    panLabel_ = new QLabel(tr("Pan: "), this);
+    panLabel_->setGeometry(QRect(QPoint(10, 1100),
+                                  QSize(100, 50)));
+
 
     panSlider_ = new QSlider(Qt::Horizontal, this);
     panSlider_->setGeometry(QRect(QPoint(100, 1100),
                                    QSize(400, 50)));
     panSlider_->setRange(0, 1);
 
+    startRangeLabel_ = new QLabel(tr("Start: "), this);
+    startRangeLabel_->setGeometry(QRect(QPoint(10, 1200),
+                                  QSize(100, 50)));
+    endRangeLabel_ = new QLabel(tr("End: "), this);
+    endRangeLabel_->setGeometry(QRect(QPoint(10, 1300),
+                                  QSize(100, 50)));
+    endRange_ = new QLineEdit(this);
+    endRange_->setGeometry(QRect(QPoint(100, 1300),
+                                  QSize(400, 50)));
+    startRange_ = new QLineEdit(this);
+    startRange_->setGeometry(QRect(QPoint(100, 1200),
+                                  QSize(400, 50)));
+
+    resolution_ = new QSlider(Qt::Horizontal, this);
+    resolution_->setGeometry(QRect(QPoint(100, 1400),
+                                   QSize(400, 50)));
+    resolution_->setRange(1, 1000);
+
+    resolutionLabel_ = new QLabel(tr("Resolution: "), this);
+    resolutionLabel_->setGeometry(QRect(QPoint(10, 1400),
+                                  QSize(100, 50)));
+
+
+
+
 
     spline_ = new QuinticHermiteSpline(1, 3, 2, 3, 1, 2, 200, 50);
 
     auto *layout = new QGridLayout;
 
-    layout->addWidget(button_, 3, 0, 1, 2);
+    layout->addWidget(button_, 4, 0, 1, 4);
     layout->addWidget(portLabel_, 0, 0, 1, 1);
+    layout->addWidget(resolutionLabel_, 0, 2, 1, 1);
+    layout->addWidget(resolution_, 0, 3, 1, 1);
     layout->addWidget(comPort_, 0, 1, 1, 1);
-    layout->addWidget(zoomSlider_, 1, 0, 1, 1);
-    layout->addWidget(graphicsView_, 2, 0, 1, 2);
-    layout->addWidget(panSlider_, 1, 1, 1, 1);
+    layout->addWidget(zoomSlider_, 1, 1, 1, 1);
+    layout->addWidget(zoomLabel_, 1, 0, 1, 1);
+    layout->addWidget(graphicsView_, 3, 0, 1, 4);
+    layout->addWidget(panSlider_, 1, 3, 1, 1);
+    layout->addWidget(panLabel_, 1, 2, 1, 1);
+    layout->addWidget(startRange_, 2, 1, 1, 1);
+    layout->addWidget(endRange_, 2, 3, 1, 1);
+    layout->addWidget(startRangeLabel_, 2, 0, 1, 1);
+    layout->addWidget(endRangeLabel_, 2, 2, 1, 1);
 
     connect(button_, SIGNAL(released()), this, SLOT(sendToRobot()));
     connect(zoomSlider_, SIGNAL(valueChanged(int)), this, SLOT(updateZoom()));
     setLayout(layout);
-
-
 
     setWindowTitle(tr("Robot Path Planner"));
 
@@ -77,6 +117,15 @@ MainWindow::~MainWindow()
     delete spline_;
     delete zoomSlider_;
     delete panSlider_;
+    delete zoomLabel_;
+    delete panLabel_;
+    delete startRange_;
+    delete endRange_;
+    delete startRangeLabel_;
+    delete endRangeLabel_;
+    delete resolution_;
+    delete resolutionLabel_;
+
 }
 
 void MainWindow::sendToRobot() {
