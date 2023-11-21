@@ -1,15 +1,12 @@
-//
-// Created by GreatNeel on 11/18/23.
-//
+#pragma once
 
-#ifndef CURVEPATHSIMULATOR_QUINTICHERMITESPLINE_H
-#define CURVEPATHSIMULATOR_QUINTICHERMITESPLINE_H
-#include <QPainter>
+#include <QGraphicsScene>
+#include <QGraphicsView>
 
 class Waypoint;
 
 class QuinticHermiteSpline {
-    double start, end, startVelocity, endVelocity, startAcceleration, endAcceleration, scale;
+    double start, end, startVelocity, endVelocity, startAcceleration, endAcceleration, xScale, yScale;
 
     /*
      https://www.rose-hulman.edu/~finn/CCLI/Notes/day09.pdf
@@ -23,12 +20,10 @@ class QuinticHermiteSpline {
             {0, 0, 0, 10, -15, 6},
     };
 public:
-    QuinticHermiteSpline(double start, double end, double startVelocity, double endVelocity, double startAcceleration, double endAcceleration, double scale);
+    QuinticHermiteSpline(double start, double end, double startVelocity, double endVelocity, double startAcceleration, double endAcceleration, double xScale, double yScale);
     double evaluateDerivative(double t, int order);
     double evaluatePoint(double t, const double (*customBasisFunctions)[6][6] = &basisFunctions);
-    void draw(QPainter *painter, int points = 100);
+    void draw(QGraphicsView *view, QGraphicsScene *scene, int points = 100, int startPoint = 0, int endPoint = 1);
     Waypoint getWaypoint(double time);
 };
 
-
-#endif //CURVEPATHSIMULATOR_QUINTICHERMITESPLINE_H

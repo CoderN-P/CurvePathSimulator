@@ -1,9 +1,4 @@
-//
-// Created by GreatNeel on 11/18/23.
-//
-
-#ifndef CURVEPATHSIMULATOR_WAYPOINT_H
-#define CURVEPATHSIMULATOR_WAYPOINT_H
+#pragma once
 
 class QuinticHermiteSpline;
 
@@ -17,5 +12,3 @@ public:
     double getLinearVelocity();
 };
 
-
-#endif //CURVEPATHSIMULATOR_WAYPOINT_H

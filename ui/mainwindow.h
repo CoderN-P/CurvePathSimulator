@@ -1,21 +1,41 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
+#include <QWidget>
+#include <QProcess>
 
-#include <QMainWindow>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+class QComboBox;
+class QPushButton;
+class QLabel;
+class QGraphicsView;
+class QGraphicsScene;
+class QuinticHermiteSpline;
 
-class MainWindow : public QMainWindow
+class MainWindow : public QWidget
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    // constructor
+    explicit MainWindow(QWidget *parent = nullptr);
+    // destructor
+    ~MainWindow() override;
+
+private slots:
+    void sendToRobot();
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
-    Ui::MainWindow *ui;
+    QPushButton* button_{};
+    QProcess process_{};
+    QComboBox* comPort_{};
+    QLabel* portLabel_{};
+
+public:
+    QGraphicsView* graphicsView_{};
+    QGraphicsScene* graphicsScene_{};
+    QuinticHermiteSpline* spline_{};
+
 };
-#endif // MAINWINDOW_H
+
