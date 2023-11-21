@@ -9,6 +9,8 @@ class QLabel;
 class QGraphicsView;
 class QGraphicsScene;
 class QuinticHermiteSpline;
+class QSlider;
+
 
 class MainWindow : public QWidget
 {
@@ -22,15 +24,19 @@ public:
 
 private slots:
     void sendToRobot();
+    void updateZoom();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private:
+    void drawAxis() const;
     QPushButton* button_{};
     QProcess process_{};
     QComboBox* comPort_{};
     QLabel* portLabel_{};
+    QSlider* zoomSlider_{};
+    QSlider* panSlider_{};
 
 public:
     QGraphicsView* graphicsView_{};

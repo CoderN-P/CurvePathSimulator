@@ -41,24 +41,18 @@ double QuinticHermiteSpline::evaluateDerivative(double t, int order) {
     return evaluatePoint(t, &customBasisFunctions);
 }
 
-void QuinticHermiteSpline::draw(QGraphicsView *view, QGraphicsScene *scene, int points, int startPoint, int endPoint) {
+void QuinticHermiteSpline::draw(QGraphicsView *view, QGraphicsScene *scene, int points, int startPoint, int endPoint, double zoom, double pan) {
     int height = view->height();
     int width = view->width();
     int diff = endPoint - startPoint;
-    int cam = 2;
-    double scaleX = width/(2*fabs(endPoint));
+    double scaleX = (width)/(zoom*2*fabs(endPoint));
     QPoint prevPoint;
     for (int i = 0; i <= points; i++){
-
         double t = (diff*(double(i)/double(points))+startPoint);
-
         double y = evaluatePoint(t, &basisFunctions);
+
         y = height/2 - y*yScale;
-
-
         t = width/2 + t*(scaleX);
-
-
 
         if (i == 0){
             prevPoint = QPoint(t, y);
@@ -66,9 +60,6 @@ void QuinticHermiteSpline::draw(QGraphicsView *view, QGraphicsScene *scene, int 
         }
 
         QPoint point2 = QPoint(t, y);
-
-        std::cout << "Height: " << height << " Width: " << width << " X: " << t << " Y: " << y << std::endl;
-
         scene->addLine(prevPoint.x(), prevPoint.y(), point2.x(), point2.y());
         prevPoint = point2;
     }

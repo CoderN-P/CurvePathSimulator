@@ -23,7 +23,7 @@ public:
     QuinticHermiteSpline(double start, double end, double startVelocity, double endVelocity, double startAcceleration, double endAcceleration, double xScale, double yScale);
     double evaluateDerivative(double t, int order);
     double evaluatePoint(double t, const double (*customBasisFunctions)[6][6] = &basisFunctions);
-    void draw(QGraphicsView *view, QGraphicsScene *scene, int points = 100, int startPoint = 0, int endPoint = 1);
+    void draw(QGraphicsView *view, QGraphicsScene *scene, int points = 100, int startPoint = 0, int endPoint = 1, double zoom=1, double pan=1);
     Waypoint getWaypoint(double time);
 };
 

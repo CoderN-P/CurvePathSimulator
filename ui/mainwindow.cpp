@@ -2,7 +2,6 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QGraphicsScene>
-#include "drawAxis.cpp"
 #include "../classes/QuinticHermiteSpline.h"
 #include "mainwindow.h"
 
@@ -35,17 +34,31 @@ MainWindow::MainWindow(QWidget *parent)
     graphicsScene_ = new QGraphicsScene();
     graphicsView_->setScene(graphicsScene_);
 
+    zoomSlider_ = new QSlider(Qt::Horizontal, this);
+    zoomSlider_->setGeometry(QRect(QPoint(100, 1000),
+                                   QSize(400, 50)));
+    zoomSlider_->setRange(1, 10);
+
+
+    panSlider_ = new QSlider(Qt::Horizontal, this);
+    panSlider_->setGeometry(QRect(QPoint(100, 1100),
+                                   QSize(400, 50)));
+    panSlider_->setRange(0, 1);
+
+
     spline_ = new QuinticHermiteSpline(1, 3, 2, 3, 1, 2, 200, 50);
 
     auto *layout = new QGridLayout;
 
-    layout->addWidget(button_, 2, 0, 1, 2);
+    layout->addWidget(button_, 3, 0, 1, 2);
     layout->addWidget(portLabel_, 0, 0, 1, 1);
     layout->addWidget(comPort_, 0, 1, 1, 1);
-    layout->addWidget(graphicsView_, 1, 0, 1, 2);
-
+    layout->addWidget(zoomSlider_, 1, 0, 1, 1);
+    layout->addWidget(graphicsView_, 2, 0, 1, 2);
+    layout->addWidget(panSlider_, 1, 1, 1, 1);
 
     connect(button_, SIGNAL(released()), this, SLOT(sendToRobot()));
+    connect(zoomSlider_, SIGNAL(valueChanged(int)), this, SLOT(updateZoom()));
     setLayout(layout);
 
 
@@ -61,6 +74,9 @@ MainWindow::~MainWindow()
     delete portLabel_;
     delete graphicsView_;
     delete graphicsScene_;
+    delete spline_;
+    delete zoomSlider_;
+    delete panSlider_;
 }
 
 void MainWindow::sendToRobot() {
@@ -83,6 +99,20 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 
     QWidget::resizeEvent(event);
     graphicsScene_->clear();
-    spline_->draw(graphicsView_, graphicsScene_, 1000, -2, 2);
-    drawAxis(graphicsView_, graphicsScene_);
+    spline_->draw(graphicsView_, graphicsScene_, 100, -2, 2);
+    this->drawAxis();
+}
+
+void MainWindow::drawAxis() const{
+    int graphicsViewWidth = graphicsView_->width();
+    int graphicsViewHeight = graphicsView_->height();
+    graphicsScene_->addLine((int)(graphicsViewWidth/2), 0, (int)(graphicsViewWidth/2), graphicsViewHeight);
+    graphicsScene_->addLine(0, (int)(graphicsViewHeight/2), graphicsViewWidth, (int)(graphicsViewHeight/2));
+
+}
+
+void MainWindow::updateZoom() {
+    graphicsScene_->clear();
+    spline_->draw(graphicsView_, graphicsScene_, 100, -2, 2, zoomSlider_->value(), panSlider_->value());
+    this->drawAxis();
 }
