@@ -83,8 +83,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto *spline = new QuinticHermiteSpline(QPoint(-2, -2), QPoint(-1, 0), QPoint(0, 1), QPoint(3, 0), QPoint(1, 1), QPoint(0, 1));
     auto *spline2 = new QuinticHermiteSpline(QPoint(-1, 0), QPoint(2, 2), QPoint(3, 0), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1));
-    auto *spline3 = new QuinticHermiteSpline(QPoint(2, 2), QPoint(0, 3), QPoint(2, 1), QPoint(1, 2), QPoint(1, 1), QPoint(2, 1));
+    auto *spline3 = new QuinticHermiteSpline(QPoint(2, 2), QPoint(-2, -2), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1), QPoint(1, 1));
 
+    graphicsView_->setRenderHint(QPainter::Antialiasing, true);
 
     QVector<QuinticHermiteSpline> splineList = {*spline, *spline2, *spline3};
 
@@ -158,7 +159,7 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 
     QWidget::resizeEvent(event);
     graphicsScene_->clear();
-    path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 100);
+    path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
     this->drawAxis();
 }
 
@@ -173,6 +174,6 @@ void MainWindow::drawAxis() const{
 
 void MainWindow::updateZoom() {
     graphicsScene_->clear();
-    path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 100);
+    path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
     this->drawAxis();
 }

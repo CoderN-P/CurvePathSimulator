@@ -69,29 +69,55 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     // Draw ticks and labels
     drawGridLines(scaleX, scaleY, width, height, scene);
     drawTicksAndLabels(scaleX, scaleY, width, height, scene);
+    QGraphicsItemGroup *group = new QGraphicsItemGroup();
+    QPointF prevPoint;
 
-    double prevPoint[2];
+    QPen curvePen;
+    curvePen.setWidthF(2.0);       // Set the line width
+    curvePen.setStyle(Qt::SolidLine);  // Set the line style
+
+    QColor colors[3] = {Qt::blue, Qt::red, Qt::green};
+
     for (int idx = 0; idx < splines.size(); idx++) {
         QuinticHermiteSpline spline = splines[idx];
+        curvePen.setColor(colors[idx]);
         for (int i = 0; i <= points; i++) {
             double t = (double(i) / double(points));
             double x = spline.evaluatePoint(t, &spline.basisFunctions, true);
             double y = spline.evaluatePoint(t, &spline.basisFunctions, false);
-            std::cout << x << ", " << y << std::endl;
 
             y = double(height) / 2 - y * scaleY;
 
             x = double(width) / 2 + x * (scaleX);
 
-            if ((i == 0 && idx == 0) || y > height || y < 0) {
-                prevPoint[0] = x;
-                prevPoint[1] = y;
+            if (i == 0 || y < 0 || y > height){
+                prevPoint = QPointF(x, y);
+                if (i == 0){
+                    // Draw a circle to mark the start of a spline
+                    QGraphicsEllipseItem *circle = new QGraphicsEllipseItem(QRectF(x-5, y-5, 10, 10));
+                    // fill circle
+                    QBrush brush(Qt::SolidPattern);
+                    brush.setColor(colors[idx]);
+                    circle->setBrush(brush);
+                    circle->setPen(curvePen);
+                    // set circle to highest z value
+                    circle->setZValue(1000);
+                    // lower opacity by 10%
+                    circle->setOpacity(0.9);
+                    group->addToGroup(circle);
+                }
                 continue;
             }
-
-            scene->addLine(prevPoint[0], prevPoint[1], x, y);
-            prevPoint[0] = x;
-            prevPoint[1] = y;
+            QPointF point = QPointF(x, y);
+            QGraphicsLineItem *curve = new QGraphicsLineItem(QLineF(prevPoint,point));
+            curve->setPen(curvePen);
+            group->addToGroup(curve);
+            prevPoint = point;
         }
     }
+
+    scene->addItem(group);
+
+    // Draw a circle at the start and end of the path
+
 }
