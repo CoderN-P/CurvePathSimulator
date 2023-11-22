@@ -20,6 +20,8 @@ set(PROJECT_SOURCES
         classes/QuinticHermiteSpline.h
         classes/Waypoint.cpp
         classes/Waypoint.h
+        classes/Path.cpp
+        classes/Path.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

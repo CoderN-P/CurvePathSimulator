@@ -5,6 +5,7 @@
 #include <QGraphicsView>
 #include <QLineEdit>
 #include "../classes/QuinticHermiteSpline.h"
+#include "../classes/Path.h"
 #include "mainwindow.h"
 
 
@@ -40,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     zoomSlider_->setGeometry(QRect(QPoint(100, 1000),
                                    QSize(400, 50)));
     zoomSlider_->setRange(1, 10);
+    zoomSlider_->setValue(6);
 
     zoomLabel_ = new QLabel(tr("Zoom: "), this);
     zoomLabel_->setGeometry(QRect(QPoint(10, 1000),
@@ -66,6 +68,8 @@ MainWindow::MainWindow(QWidget *parent)
     startRange_ = new QLineEdit(this);
     startRange_->setGeometry(QRect(QPoint(100, 1200),
                                   QSize(400, 50)));
+    startRange_->setText("-1");
+    endRange_->setText("1");
 
     resolution_ = new QSlider(Qt::Horizontal, this);
     resolution_->setGeometry(QRect(QPoint(100, 1400),
@@ -76,11 +80,10 @@ MainWindow::MainWindow(QWidget *parent)
     resolutionLabel_->setGeometry(QRect(QPoint(10, 1400),
                                   QSize(100, 50)));
 
+    auto *spline = new QuinticHermiteSpline(-1, 1, 1, 1, 1, 1);
+    QVector<QuinticHermiteSpline> splineList = {*spline};
 
-
-
-
-    spline_ = new QuinticHermiteSpline(1, 3, 2, 3, 1, 2, 200, 50);
+    path_ = new Path(splineList);
 
     auto *layout = new QGridLayout;
 
@@ -101,6 +104,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(button_, SIGNAL(released()), this, SLOT(sendToRobot()));
     connect(zoomSlider_, SIGNAL(valueChanged(int)), this, SLOT(updateZoom()));
+
+
     setLayout(layout);
 
     setWindowTitle(tr("Robot Path Planner"));
@@ -114,7 +119,6 @@ MainWindow::~MainWindow()
     delete portLabel_;
     delete graphicsView_;
     delete graphicsScene_;
-    delete spline_;
     delete zoomSlider_;
     delete panSlider_;
     delete zoomLabel_;
@@ -125,6 +129,7 @@ MainWindow::~MainWindow()
     delete endRangeLabel_;
     delete resolution_;
     delete resolutionLabel_;
+    delete path_;
 
 }
 
@@ -148,13 +153,14 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 
     QWidget::resizeEvent(event);
     graphicsScene_->clear();
-    spline_->draw(graphicsView_, graphicsScene_, 100, -2, 2);
+    path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 100);
     this->drawAxis();
 }
 
 void MainWindow::drawAxis() const{
     int graphicsViewWidth = graphicsView_->width();
     int graphicsViewHeight = graphicsView_->height();
+
     graphicsScene_->addLine((int)(graphicsViewWidth/2), 0, (int)(graphicsViewWidth/2), graphicsViewHeight);
     graphicsScene_->addLine(0, (int)(graphicsViewHeight/2), graphicsViewWidth, (int)(graphicsViewHeight/2));
 
@@ -162,6 +168,6 @@ void MainWindow::drawAxis() const{
 
 void MainWindow::updateZoom() {
     graphicsScene_->clear();
-    spline_->draw(graphicsView_, graphicsScene_, 100, -2, 2, zoomSlider_->value(), panSlider_->value());
+    path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 100);
     this->drawAxis();
 }

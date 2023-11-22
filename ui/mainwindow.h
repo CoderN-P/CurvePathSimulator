@@ -2,15 +2,16 @@
 #include <QWidget>
 #include <QProcess>
 
-
 class QComboBox;
 class QPushButton;
 class QLabel;
 class QGraphicsView;
 class QGraphicsScene;
-class QuinticHermiteSpline;
 class QSlider;
 class QLineEdit;
+class Path;
+
+
 
 
 class MainWindow : public QWidget
@@ -51,7 +52,7 @@ private:
 public:
     QGraphicsView* graphicsView_{};
     QGraphicsScene* graphicsScene_{};
-    QuinticHermiteSpline* spline_{};
+    Path* path_{};
 
 };
 
