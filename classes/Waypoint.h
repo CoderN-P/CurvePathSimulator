@@ -9,6 +9,6 @@ class Waypoint {
 public:
     Waypoint(double y,  double time, QuinticHermiteSpline parentSpline);
     double getAngularVelocity();
-    double getLinearVelocity();
+    double getLinearVelocity(bool useX = true);
 };
 

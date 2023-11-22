@@ -7,13 +7,21 @@ Waypoint::Waypoint(double y, double time, QuinticHermiteSpline parentSpline) {
     this->parentSpline = &parentSpline;
 }
 
-double Waypoint::getLinearVelocity() {
-    return (*parentSpline).evaluateDerivative(time, 1);
+double Waypoint::getLinearVelocity(bool useX) {
+    return (*parentSpline).evaluateDerivative(time, 1, useX);
 }
 
 double Waypoint::getAngularVelocity() {
-    double linearVelocity = getLinearVelocity();
-    double curvature = (*parentSpline).evaluateDerivative(time, 2);
-    double radius = 1/curvature;
-    return linearVelocity/radius;
+    double dx_dt = getLinearVelocity(true);
+    double dy_dt = getLinearVelocity(false);
+
+    // Check for division by zero to avoid undefined results
+    if (dx_dt != 0.0) {
+        // Calculate angular velocity
+        return dy_dt / dx_dt;
+    } else {
+        // Handle the case where dx/dt is zero (avoid division by zero)
+        // You might want to return a special value or handle this case appropriately
+        return std::numeric_limits<double>::infinity();  // Example: Return infinity for simplicity
+    }
 }

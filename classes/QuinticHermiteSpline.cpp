@@ -7,24 +7,38 @@
 #include "Waypoint.h"
 #include <iostream>
 
-double QuinticHermiteSpline::evaluatePoint(double t, const double (*customBasisFunctions)[6][6]) {
-    double order[6] = { start, startVelocity, startAcceleration, endAcceleration, endVelocity, end };
-    double x = 0;
+double QuinticHermiteSpline::evaluatePoint(double p, const double (*customBasisFunctions)[6][6], bool x) const {
+    double order[6];
+    if (x){
+        order[0] = start.x();
+        order[1] = startVelocity.x();
+        order[2] = startAcceleration.x();
+        order[3] = endAcceleration.x();
+        order[4] = endVelocity.x();
+        order[5] = end.x();
 
+    } else {
+        order[0] = start.y();
+        order[1] = startVelocity.y();
+        order[2] = startAcceleration.y();
+        order[3] = endAcceleration.y();
+        order[4] = endVelocity.y();
+        order[5] = end.y();
+    }
+
+    double result = 0;
     for (int i = 0; i < 6; i++){
         double temp = 0;
         for (int j = 0; j < 6; j++){
-            temp += (*customBasisFunctions)[i][j] * pow(t, j);
+            temp += (*customBasisFunctions)[i][j] * pow(p, j);
         }
-        x += temp*order[i];
+        result += temp*order[i];
     }
 
-    return x;
-
-
+    return result;
 }
 
-double QuinticHermiteSpline::evaluateDerivative(double t, int order) {
+double QuinticHermiteSpline::evaluateDerivative(double t, int order, bool x) {
     order = std::clamp(order, 0, 5);
 
     double customBasisFunctions[6][6];
@@ -36,12 +50,12 @@ double QuinticHermiteSpline::evaluateDerivative(double t, int order) {
         }
     }
 
-    return evaluatePoint(t, &customBasisFunctions);
+    return evaluatePoint(t, &customBasisFunctions, x);
 }
 
 
 
-QuinticHermiteSpline::QuinticHermiteSpline(double start, double end, double startVelocity, double endVelocity, double startAcceleration, double endAcceleration) {
+QuinticHermiteSpline::QuinticHermiteSpline(QPoint start, QPoint end, QPoint startVelocity, QPoint endVelocity, QPoint startAcceleration, QPoint endAcceleration) {
     this->start = start;
     this->end = end;
     this->startVelocity = startVelocity;

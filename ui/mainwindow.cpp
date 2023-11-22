@@ -4,6 +4,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QLineEdit>
+#include <iostream>
 #include "../classes/QuinticHermiteSpline.h"
 #include "../classes/Path.h"
 #include "mainwindow.h"
@@ -80,8 +81,12 @@ MainWindow::MainWindow(QWidget *parent)
     resolutionLabel_->setGeometry(QRect(QPoint(10, 1400),
                                   QSize(100, 50)));
 
-    auto *spline = new QuinticHermiteSpline(-1, 1, 1, 1, 1, 1);
-    QVector<QuinticHermiteSpline> splineList = {*spline};
+    auto *spline = new QuinticHermiteSpline(QPoint(-2, -2), QPoint(-1, 0), QPoint(0, 1), QPoint(3, 0), QPoint(1, 1), QPoint(0, 1));
+    auto *spline2 = new QuinticHermiteSpline(QPoint(-1, 0), QPoint(2, 2), QPoint(3, 0), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1));
+    auto *spline3 = new QuinticHermiteSpline(QPoint(2, 2), QPoint(0, 3), QPoint(2, 1), QPoint(1, 2), QPoint(1, 1), QPoint(2, 1));
+
+
+    QVector<QuinticHermiteSpline> splineList = {*spline, *spline2, *spline3};
 
     path_ = new Path(splineList);
 

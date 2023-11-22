@@ -1,5 +1,6 @@
 #include <QGraphicsTextItem>
 #include "Path.h"
+#include <iostream>
 
 
 Path::Path(QVector<QuinticHermiteSpline> splineList) {
@@ -52,19 +53,16 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     if (splines.isEmpty()){
         return;
     }
-    int start = splines[0].start;
-    int end = splines.last().end;
-
-    int diff = end - start;
-
     double scaleX;
+    double maxX = 0;
+    for (QuinticHermiteSpline spline : splines){
+        maxX = std::max(maxX, std::max(fabs(spline.start.x()), fabs(spline.end.x())));
+    }
+
     // Check if startPoint or endPoint is greater in magnitude
     // The one with the greater magnitude will be used to determine how many x ticks are needed
-    if (fabs(start) > fabs(end)){
-        scaleX = (width) / (zoom * 2 * fabs(start));
-    } else {
-        scaleX = (width) / (zoom * 2 * fabs(end));
-    }
+    scaleX = (width) / (zoom * 2 * fabs(maxX));
+
 
     double scaleY = scaleX * (double(height) / width);
 
@@ -76,20 +74,23 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     for (int idx = 0; idx < splines.size(); idx++) {
         QuinticHermiteSpline spline = splines[idx];
         for (int i = 0; i <= points; i++) {
-            double t = (diff * (double(i) / double(points)) + start);
-            double y = spline.evaluatePoint(t, &spline.basisFunctions);
+            double t = (double(i) / double(points));
+            double x = spline.evaluatePoint(t, &spline.basisFunctions, true);
+            double y = spline.evaluatePoint(t, &spline.basisFunctions, false);
+            std::cout << x << ", " << y << std::endl;
 
             y = double(height) / 2 - y * scaleY;
-            t = double(width) / 2 + t * (scaleX);
 
-            if (i == 0 || y > height || y < 0) {
-                prevPoint[0] = t;
+            x = double(width) / 2 + x * (scaleX);
+
+            if ((i == 0 && idx == 0) || y > height || y < 0) {
+                prevPoint[0] = x;
                 prevPoint[1] = y;
                 continue;
             }
 
-            scene->addLine(prevPoint[0], prevPoint[1], t, y);
-            prevPoint[0] = t;
+            scene->addLine(prevPoint[0], prevPoint[1], x, y);
+            prevPoint[0] = x;
             prevPoint[1] = y;
         }
     }
