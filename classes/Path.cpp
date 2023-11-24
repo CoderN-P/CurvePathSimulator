@@ -52,7 +52,7 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
 
 
 
-void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, bool drawControlPoints, bool changeScale){
+void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, bool controlPoints, bool changeScale){
 
     int height = view->height();
     int width = view->width();
@@ -105,23 +105,8 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
 
             if (i == 0 || y < 0 || y > height){
                 prevPoint = QPointF(x, y);
-                if (i == 0 && drawControlPoints){
-                    // Draw a circle to mark the start of a spline
-                    auto *circle = new ControlPointUI(0, idx, this);
-                    // fill circle
-                    QBrush brush(Qt::SolidPattern);
-                    circle->setRect(0, 0, 10, 10);
-                    circle->setPos(x-5, y-5);
-                    brush.setColor(colors[idx]);
-                    circle->setBrush(brush);
-                    circle->setPen(curvePen);
-                    // set circle to highest z value
-                    circle->setZValue(1000);
-                    // lower opacity by 10%
-                    circle->setOpacity(0.9);
-                    circle->setParent(scene);
-                    scene->addItem(circle);
-
+                if (i == 0 && controlPoints){
+                    drawControlPoints(idx, &colors[idx], &curvePen);
                 }
                 continue;
             }
@@ -136,4 +121,79 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     }
 
     scene->addItem(group);
+}
+
+void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen) {
+    // Draw a circle to mark the start of a spline
+    QGraphicsScene &scene = *parent->graphicsScene_;
+    double x = splines[splineIdx].start.x();
+    double y = splines[splineIdx].start.y();
+    double width = scene.width();
+    double height = scene.height();
+    double ystart = height / 2 - y * scaleY;
+    double xstart = width / 2 + x * scaleX;
+    auto *circle = new ControlPointUI(0, splineIdx, this);
+    QBrush brush(Qt::SolidPattern);
+    brush.setColor(*color);
+    circle->setRect(0, 0, 10, 10);
+    circle->setPos(xstart-5, ystart-5);
+
+    circle->setBrush(brush);
+    circle->setPen(*curvePen);
+    circle->setZValue(1000);
+    circle->setOpacity(0.9);
+    circle->setParent(&scene);
+    scene.addItem(circle);
+
+
+    // Draw a circle to mark the velocity tangent
+
+    double xV = splines[splineIdx].startVelocity.x();
+    double yV = splines[splineIdx].startVelocity.y();
+    xV = width / 2 + (x + xV) * scaleX;
+    yV = height / 2 - (y + yV) * scaleY;
+    auto *circleV = new ControlPointUI(2, splineIdx, this);
+    circleV->setRect(0, 0, 10, 10);
+    circleV->setPos(xV-5, yV-5);
+    circleV->setBrush(brush);
+    circleV->setPen(*curvePen);
+    circleV->setZValue(1000);
+    circleV->setOpacity(0.9);
+    circleV->setParent(&scene);
+    scene.addItem(circleV);
+
+    QLineF line = QLineF(QPointF(xstart, ystart), QPointF(xV, yV));
+    // Make line dotted and gray
+    QPen *curvePen2 = new QPen();
+    curvePen2->setColor(Qt::gray);
+    curvePen2->setStyle(Qt::DashLine);
+    curvePen2->setWidthF(2.0);
+    // Label the line
+    QGraphicsTextItem *text = scene.addText("Velocity");
+    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
+                 line.p2().y() + 5);
+    scene.addLine(line, *curvePen2);
+
+    // Draw a circle to mark the acceleration tangent
+
+    double xA = splines[splineIdx].startAcceleration.x();
+    double yA = splines[splineIdx].startAcceleration.y();
+    xA = width / 2 + (x + xA) * scaleX;
+    yA = height / 2 - (y + yA) * scaleY;
+    auto *circleA = new ControlPointUI(3, splineIdx, this);
+    circleA->setRect(0, 0, 10, 10);
+    circleA->setPos(xA-5, yA-5);
+    circleA->setBrush(brush);
+    circleA->setPen(*curvePen);
+    circleA->setZValue(1000);
+    circleA->setOpacity(0.9);
+    circleA->setParent(&scene);
+    scene.addItem(circleA);
+
+    line = QLineF(QPointF(xstart, ystart), QPointF(xA, yA));
+
+    text = scene.addText("Acceleration");
+    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
+                 line.p2().y() + 5);
+    scene.addLine(line, *curvePen2);
 }
