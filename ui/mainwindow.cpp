@@ -83,9 +83,9 @@ MainWindow::MainWindow(QWidget *parent)
     resolutionLabel_->setGeometry(QRect(QPoint(10, 1400),
                                   QSize(100, 50)));
 
-    auto *spline = new QuinticHermiteSpline(QPointF(-2, -2), QPoint(-1, 0), QPoint(0, 1), QPoint(3, 2), QPoint(1, 1), QPoint(0, 1));
-    auto *spline2 = new QuinticHermiteSpline(QPointF(-1, 0), QPoint(2, 2), QPoint(3, 2), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1));
-    auto *spline3 = new QuinticHermiteSpline(QPointF(2, 2), QPoint(-2, -1), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1), QPoint(1, 1));
+    auto *spline = new QuinticHermiteSpline(QPointF(-2, -2), QPointF(-1, 0), QPointF(0, 1), QPointF(3, 2), QPointF(1, 1), QPointF(0, 1));
+    auto *spline2 = new QuinticHermiteSpline(QPointF(-1, 0), QPointF(2, 2), QPointF(3, 2), QPointF(2, 1), QPointF(0, 1), QPointF(1, 1));
+    auto *spline3 = new QuinticHermiteSpline(QPointF(2, 2), QPointF(-2, -1), QPointF(2, 1), QPointF(0, 1), QPointF(1, 1), QPointF(1, 1));
 
     graphicsView_->setRenderHint(QPainter::Antialiasing, true);
 
@@ -173,7 +173,7 @@ void MainWindow::drawAxis() const{
 
 }
 
-void MainWindow::updateZoom() {
+void MainWindow::updateZoom() const {
     graphicsScene_->clear();
     path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
 }

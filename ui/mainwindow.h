@@ -29,7 +29,7 @@ public:
 
 private slots:
     void sendToRobot();
-    void updateZoom();
+    void updateZoom() const;
 
 protected:
     void resizeEvent(QResizeEvent *event) override;

@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QObject>
 #include <QBrush>
+#include <iostream>
 #pragma once
 
 class QuinticHermiteSpline;
@@ -16,15 +17,17 @@ public:
     int ptype; // 0 = start, 1 = end, 2 = velocityTangentStart, 3 = accelerationTangentStart, 4 = velocityTangentEnd, 5 = accelerationTangentEnd
     int splineIdx;
     Path *parentPath;
-    explicit ControlPointUI(int type=0, int splineIdx=0, Path *path = nullptr)
+    explicit ControlPointUI(int type=0, int splineIdx=0, Path *path=nullptr)
     : QObject(), QGraphicsEllipseItem() {
-        setFlag(QGraphicsItem::ItemIsMovable);
-        setFlag(QGraphicsItem::ItemIsSelectable, true);
-        setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
+
 
         this->ptype = type;
         this->splineIdx = splineIdx;
         this->parentPath = path;
+
+        setFlag(QGraphicsItem::ItemIsMovable);
+        setFlag(QGraphicsItem::ItemIsSelectable, true);
+        setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     }
 
 protected:

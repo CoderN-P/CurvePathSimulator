@@ -55,7 +55,7 @@ double QuinticHermiteSpline::evaluateDerivative(double t, int order, bool x) {
 
 
 
-QuinticHermiteSpline::QuinticHermiteSpline(QPointF start, QPoint end, QPoint startVelocity, QPoint endVelocity, QPoint startAcceleration, QPoint endAcceleration) {
+QuinticHermiteSpline::QuinticHermiteSpline(QPointF start, QPointF end, QPointF startVelocity, QPointF endVelocity, QPointF startAcceleration, QPointF endAcceleration) {
     this->start = start;
     this->end = end;
     this->startVelocity = startVelocity;
