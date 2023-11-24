@@ -22,6 +22,8 @@ set(PROJECT_SOURCES
         classes/Waypoint.h
         classes/Path.cpp
         classes/Path.h
+        classes/ControlPointUI.cpp
+        classes/ControlPointUI.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

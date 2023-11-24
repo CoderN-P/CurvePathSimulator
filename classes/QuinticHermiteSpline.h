@@ -11,11 +11,11 @@ public:
     QuinticHermiteSpline(){
         return;
     }
-    QuinticHermiteSpline(QPoint start, QPoint end, QPoint startVelocity, QPoint endVelocity, QPoint startAcceleration, QPoint endAcceleration);
+    QuinticHermiteSpline(QPointF start, QPoint end, QPoint startVelocity, QPoint endVelocity, QPoint startAcceleration, QPoint endAcceleration);
     double evaluateDerivative(double t, int order, bool x);
     double evaluatePoint(double p, const double (*customBasisFunctions)[6][6] = &basisFunctions, bool x = true) const;
     Waypoint getWaypoint(double time);
-    QPoint start;
+    QPointF start;
     QPoint end;
 /*
  https://www.rose-hulman.edu/~finn/CCLI/Notes/day09.pdf

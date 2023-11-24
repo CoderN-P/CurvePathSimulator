@@ -18,7 +18,10 @@ class MainWindow : public QWidget
 {
     Q_OBJECT
 
+
+
 public:
+    QSlider* zoomSlider_{};
     // constructor
     explicit MainWindow(QWidget *parent = nullptr);
     // destructor
@@ -30,14 +33,13 @@ private slots:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    // void mousePressEvent(QMouseEvent *event) override;
 
 private:
-    void drawAxis() const;
     QPushButton* button_{};
     QProcess process_{};
     QComboBox* comPort_{};
     QLabel* portLabel_{};
-    QSlider* zoomSlider_{};
     QSlider* panSlider_{};
     QLineEdit* startRange_{};
     QLineEdit* endRange_{};
@@ -47,12 +49,14 @@ private:
     QLabel* endRangeLabel_{};
     QSlider* resolution_{};
     QLabel* resolutionLabel_{};
+    QPointF lastClick_{};
 
 
 public:
     QGraphicsView* graphicsView_{};
     QGraphicsScene* graphicsScene_{};
     Path* path_{};
+    void drawAxis() const;
 
 };
 

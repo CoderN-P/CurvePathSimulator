@@ -1,10 +1,16 @@
 #include <QGraphicsTextItem>
+#include <QEvent>
+#include <QSlider>
+#include <QGraphicsSceneMouseEvent>
 #include "Path.h"
+#include "ControlPointUI.h"
 #include <iostream>
+#include <utility>
 
 
-Path::Path(QVector<QuinticHermiteSpline> splineList) {
-    this->splines = splineList;
+Path::Path(QVector<QuinticHermiteSpline> splineList, MainWindow *parent) {
+    this->splines = std::move(splineList);
+    this->parent = parent;
 }
 
 
@@ -46,30 +52,36 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
 
 
 
-void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points){
+void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, bool drawControlPoints, bool changeScale){
+
     int height = view->height();
     int width = view->width();
 
     if (splines.isEmpty()){
         return;
     }
-    double scaleX;
-    double maxX = 0;
-    for (QuinticHermiteSpline spline : splines){
-        maxX = std::max(maxX, std::max(fabs(spline.start.x()), fabs(spline.end.x())));
+
+    if (changeScale) {
+        double maxX = 0;
+        for (QuinticHermiteSpline spline: splines) {
+            maxX = std::max(maxX, std::max(fabs(spline.start.x()), fabs(spline.end.x())));
+        }
+
+        // Check if startPoint or endPoint is greater in magnitude
+        // The one with the greater magnitude will be used to determine how many x ticks are needed
+        scaleX = (width) / (zoom * 2 * fabs(maxX));
+
+
+        scaleY = scaleX * (double(height) / width);
     }
 
-    // Check if startPoint or endPoint is greater in magnitude
-    // The one with the greater magnitude will be used to determine how many x ticks are needed
-    scaleX = (width) / (zoom * 2 * fabs(maxX));
 
-
-    double scaleY = scaleX * (double(height) / width);
 
     // Draw ticks and labels
     drawGridLines(scaleX, scaleY, width, height, scene);
     drawTicksAndLabels(scaleX, scaleY, width, height, scene);
-    QGraphicsItemGroup *group = new QGraphicsItemGroup();
+    parent->drawAxis();
+    auto *group = new QGraphicsItemGroup();
     QPointF prevPoint;
 
     QPen curvePen;
@@ -83,20 +95,23 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
         curvePen.setColor(colors[idx]);
         for (int i = 0; i <= points; i++) {
             double t = (double(i) / double(points));
-            double x = spline.evaluatePoint(t, &spline.basisFunctions, true);
-            double y = spline.evaluatePoint(t, &spline.basisFunctions, false);
+            double x = spline.evaluatePoint(t, &QuinticHermiteSpline::basisFunctions, true);
+            double y = spline.evaluatePoint(t, &QuinticHermiteSpline::basisFunctions, false);
 
             y = double(height) / 2 - y * scaleY;
 
             x = double(width) / 2 + x * (scaleX);
 
+
             if (i == 0 || y < 0 || y > height){
                 prevPoint = QPointF(x, y);
-                if (i == 0){
+                if (i == 0 && drawControlPoints){
                     // Draw a circle to mark the start of a spline
-                    QGraphicsEllipseItem *circle = new QGraphicsEllipseItem(QRectF(x-5, y-5, 10, 10));
+                    auto *circle = new ControlPointUI(0, idx, this);
                     // fill circle
                     QBrush brush(Qt::SolidPattern);
+                    circle->setRect(0, 0, 10, 10);
+                    circle->setPos(x-5, y-5);
                     brush.setColor(colors[idx]);
                     circle->setBrush(brush);
                     circle->setPen(curvePen);
@@ -104,12 +119,16 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
                     circle->setZValue(1000);
                     // lower opacity by 10%
                     circle->setOpacity(0.9);
-                    group->addToGroup(circle);
+                    circle->setParent(scene);
+                    scene->addItem(circle);
+
                 }
                 continue;
             }
             QPointF point = QPointF(x, y);
-            QGraphicsLineItem *curve = new QGraphicsLineItem(QLineF(prevPoint,point));
+            auto *curve = new QGraphicsLineItem(QLineF(prevPoint,point));
+            // get global position of curve
+
             curve->setPen(curvePen);
             group->addToGroup(curve);
             prevPoint = point;
@@ -117,7 +136,4 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     }
 
     scene->addItem(group);
-
-    // Draw a circle at the start and end of the path
-
 }

@@ -14,6 +14,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
 {
+    setMouseTracking(true);
 
     button_ = new QPushButton(tr("Send to robot"), this);
     button_->setGeometry(QRect(QPoint(100, 100),
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     graphicsScene_ = new QGraphicsScene();
     graphicsView_->setScene(graphicsScene_);
+
 
     zoomSlider_ = new QSlider(Qt::Horizontal, this);
     zoomSlider_->setGeometry(QRect(QPoint(100, 1000),
@@ -81,15 +83,17 @@ MainWindow::MainWindow(QWidget *parent)
     resolutionLabel_->setGeometry(QRect(QPoint(10, 1400),
                                   QSize(100, 50)));
 
-    auto *spline = new QuinticHermiteSpline(QPoint(-2, -2), QPoint(-1, 0), QPoint(0, 1), QPoint(3, 0), QPoint(1, 1), QPoint(0, 1));
-    auto *spline2 = new QuinticHermiteSpline(QPoint(-1, 0), QPoint(2, 2), QPoint(3, 0), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1));
-    auto *spline3 = new QuinticHermiteSpline(QPoint(2, 2), QPoint(-2, -2), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1), QPoint(1, 1));
+    auto *spline = new QuinticHermiteSpline(QPointF(-2, -2), QPoint(-1, 0), QPoint(0, 1), QPoint(3, 2), QPoint(1, 1), QPoint(0, 1));
+    auto *spline2 = new QuinticHermiteSpline(QPointF(-1, 0), QPoint(2, 2), QPoint(3, 2), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1));
+    auto *spline3 = new QuinticHermiteSpline(QPointF(2, 2), QPoint(-2, -1), QPoint(2, 1), QPoint(0, 1), QPoint(1, 1), QPoint(1, 1));
 
     graphicsView_->setRenderHint(QPainter::Antialiasing, true);
 
+
     QVector<QuinticHermiteSpline> splineList = {*spline, *spline2, *spline3};
 
-    path_ = new Path(splineList);
+    path_ = new Path(splineList, this);
+
 
     auto *layout = new QGridLayout;
 
@@ -110,7 +114,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(button_, SIGNAL(released()), this, SLOT(sendToRobot()));
     connect(zoomSlider_, SIGNAL(valueChanged(int)), this, SLOT(updateZoom()));
-
 
     setLayout(layout);
 
@@ -150,17 +153,15 @@ void MainWindow::sendToRobot() {
 
     serialPort.setPortName(comPort_->currentText());
 
-
-
 }
 
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 
     QWidget::resizeEvent(event);
+    graphicsScene_->setSceneRect(0, 0, graphicsView_->width(), graphicsView_->height());
     graphicsScene_->clear();
     path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
-    this->drawAxis();
 }
 
 void MainWindow::drawAxis() const{
@@ -175,5 +176,5 @@ void MainWindow::drawAxis() const{
 void MainWindow::updateZoom() {
     graphicsScene_->clear();
     path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
-    this->drawAxis();
 }
+
