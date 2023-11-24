@@ -14,7 +14,8 @@ class Path;
 class ControlPointUI: public QObject, public QGraphicsEllipseItem {
     Q_OBJECT
 public:
-    int ptype; // 0 = start, 1 = end, 2 = velocityTangentStart, 3 = accelerationTangentStart, 4 = velocityTangentEnd, 5 = accelerationTangentEnd
+    // 0 = start, 1 = end, 2 = velocityTangentStart, 3 = accelerationTangentStart, 4 = velocityTangentEnd, 5 = accelerationTangentEnd, 6 = start/end, 7 = start/end, 8 = velocityTangentStart/velocityTangentEnd, 9 = accelerationTangentStart/accelerationTangentEnd
+    int ptype;
     int splineIdx;
     Path *parentPath;
     explicit ControlPointUI(int type=0, int splineIdx=0, Path *path=nullptr)

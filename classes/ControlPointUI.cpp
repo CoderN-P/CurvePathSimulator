@@ -32,9 +32,22 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
             QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
             parentPath->splines[splineIdx].startAcceleration = QPointF(convertedPos.x()-spline->start.x(), convertedPos.y()-spline->start.y());
         } else if (ptype == 4) {
-            parentPath->splines[splineIdx].endVelocity = convertedPos;
+            QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
+            parentPath->splines[splineIdx].endVelocity = QPointF(convertedPos.x()-spline->end.x(), convertedPos.y()-spline->end.y());
         } else if (ptype == 5) {
-            parentPath->splines[splineIdx].endAcceleration = convertedPos;
+            QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
+            parentPath->splines[splineIdx].endAcceleration = QPointF(convertedPos.x()-spline->end.x(), convertedPos.y()-spline->end.y());
+        } else if (ptype == 6){
+            parentPath->splines[splineIdx].start = convertedPos;
+            parentPath->splines[splineIdx-1].end = convertedPos;
+        } else if (ptype == 7){
+            QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
+            parentPath->splines[splineIdx].startVelocity = QPointF(convertedPos.x() - spline->start.x(), convertedPos.y() - spline->start.y());
+            parentPath->splines[splineIdx-1].endVelocity = QPointF(convertedPos.x() - spline->start.x(), convertedPos.y() - spline->start.y());
+        } else if (ptype == 8){
+            QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
+            parentPath->splines[splineIdx].startAcceleration = QPointF(convertedPos.x()-spline->start.x(), convertedPos.y()-spline->start.y());
+            parentPath->splines[splineIdx-1].endAcceleration = QPointF(convertedPos.x()-spline->start.x(), convertedPos.y()-spline->start.y());
         }
 
         // Remove all items except the control points
@@ -49,8 +62,15 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
             }
         }
 
-
-        parentPath->draw(parentPath->parent->graphicsView_, parentPath->parent->graphicsScene_, parentPath->parent->zoomSlider_->value(), 100, ptype, false);
+        int ignoreIdx = -1;
+        int ignoreIdx2 = -1;
+        if (ptype < 6){
+            ignoreIdx = splineIdx;
+        } else {
+            ignoreIdx = splineIdx-1;
+            ignoreIdx2 = splineIdx;
+        }
+        parentPath->draw(parentPath->parent->graphicsView_, parentPath->parent->graphicsScene_, parentPath->parent->zoomSlider_->value(), 100, ptype, false, ignoreIdx, ignoreIdx2);
 
         // Call the base class implementation to allow the item to move
         return QGraphicsEllipseItem::itemChange(change, value);
@@ -59,3 +79,5 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
     // For other changes, call the base class implementation
     return QGraphicsEllipseItem::itemChange(change, value);
 }
+
+

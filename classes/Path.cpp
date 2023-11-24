@@ -52,7 +52,7 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
 
 
 
-void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, int ignore, bool changeScale){
+void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, int ignore, bool changeScale, int ignoreIdx, int ignoreIdx2){
 
     int height = view->height();
     int width = view->width();
@@ -89,9 +89,17 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     QColor colors[3] = {Qt::blue, Qt::red, Qt::green};
 
     for (int idx = 0; idx < splines.size(); idx++) {
+        // TODO: Add splines to scene instead of adding them to the group
+        // Do this so that individual splines can be removed instead of removing all splines
+        /*
+        if (!((idx != ignoreIdx && ignoreIdx != -1) || (idx != ignoreIdx2 && ignoreIdx2 != -1))){
+            drawControlPoints(idx, &colors[idx], &curvePen, ignore);
+        }
+         */
         QuinticHermiteSpline spline = splines[idx];
         curvePen.setColor(colors[idx]);
         drawControlPoints(idx, &colors[idx], &curvePen, ignore);
+
 
         for (int i = 0; i <= points; i++) {
             double t = (double(i) / double(points));
@@ -121,28 +129,66 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
 }
 
 void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int ignore) {
+    if (splines.isEmpty()){
+        return;
+    }
+    if (splineIdx == 0) {
+        drawStartControlPoints(color, curvePen, ignore);
+    } else if (splineIdx == splines.size() - 1) {
+        drawStartControlPoints(color, curvePen, ignore, false);
+        drawMiddleControlPoints(splineIdx, color, curvePen, ignore);
+    } else {
+        drawMiddleControlPoints(splineIdx, color, curvePen, ignore);
+    }
+}
+
+void Path::drawStartControlPoints(QColor *color, QPen *curvePen, int ignore, bool start){
     // Draw a circle to mark the start of a spline
     QPen *curvePen2 = new QPen();
     curvePen2->setColor(Qt::gray);
     curvePen2->setStyle(Qt::DashLine);
     curvePen2->setWidthF(2.0);
+    int idx;
+    if (start){
+        idx = 0;
+    } else {
+        idx = splines.size() - 1;
+    }
 
     QGraphicsScene *scene = parent->graphicsScene_;
-    double x = splines[splineIdx].start.x();
-    double y = splines[splineIdx].start.y();
+    double x, y, xV, yV, xA, yA;
+    if (start){
+        x = splines[idx].start.x();
+        y = splines[idx].start.y();
+    } else {
+        x = splines[idx].end.x();
+        y = splines[idx].end.y();
+    }
     double width = scene->width();
     double height = scene->height();
 
     double ystart = height / 2 - y * scaleY;
     double xstart = width / 2 + x * scaleX;
 
-    double xA = splines[splineIdx].startAcceleration.x();
-    double yA = splines[splineIdx].startAcceleration.y();
+    if (start) {
+        xA = splines[idx].startAcceleration.x();
+        yA = splines[idx].startAcceleration.y();
+    } else {
+        xA = splines[idx].endAcceleration.x();
+        yA = splines[idx].endAcceleration.y();
+    }
+
     xA = width / 2 + (x + xA) * scaleX;
     yA = height / 2 - (y + yA) * scaleY;
 
-    double xV = splines[splineIdx].startVelocity.x();
-    double yV = splines[splineIdx].startVelocity.y();
+    if (start) {
+        xV = splines[idx].startVelocity.x();
+        yV = splines[idx].startVelocity.y();
+    } else {
+        xV = splines[idx].endVelocity.x();
+        yV = splines[idx].endVelocity.y();
+    }
+
     xV = width / 2 + (x + xV) * scaleX;
     yV = height / 2 - (y + yV) * scaleY;
 
@@ -150,8 +196,10 @@ void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int i
     brush.setColor(*color);
 
 
-    if (ignore != 0) {
-        auto *circle = new ControlPointUI(0, splineIdx, this);
+    if ((ignore != 0 && start) || (ignore != 1 && !start)) {
+        int type = 0 + 1*(!start);
+
+        auto *circle = new ControlPointUI(type, idx, this);
         circle->setRect(0, 0, 10, 10);
         circle->setPos(xstart - 5, ystart - 5);
 
@@ -163,8 +211,9 @@ void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int i
         scene->addItem(circle);
     }
 
-    if (ignore != 2) {
-        auto *circleV = new ControlPointUI(2, splineIdx, this);
+    if ((ignore != 2 && start) || (ignore != 4 && !start)){
+        int type = 2 + 2*(!start);
+        auto *circleV = new ControlPointUI(type, idx, this);
         circleV->setRect(0, 0, 10, 10);
         circleV->setPos(xV - 5, yV - 5);
         circleV->setBrush(brush);
@@ -175,8 +224,9 @@ void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int i
         scene->addItem(circleV);
     }
 
-    if (ignore != 3) {
-        auto *circleA = new ControlPointUI(3, splineIdx, this);
+    if ((ignore != 3 && start) || (ignore != 5 && !start)) {
+        int type = 3 + 2*(!start);
+        auto *circleA = new ControlPointUI(type, idx, this);
         circleA->setRect(0, 0, 10, 10);
         circleA->setPos(xA - 5, yA - 5);
         circleA->setBrush(brush);
@@ -200,4 +250,94 @@ void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int i
     text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
                  line.p2().y() + 5);
     scene->addLine(line, *curvePen2);
+}
+
+void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen, int ignore) {
+    if (splines.isEmpty()){
+        return;
+    }
+    QPen *curvePen2 = new QPen();
+    curvePen2->setColor(Qt::gray);
+    curvePen2->setStyle(Qt::DashLine);
+    curvePen2->setWidthF(2.0);
+
+    QGraphicsScene *scene = parent->graphicsScene_;
+    double x, y, xV, yV, xA, yA;
+
+    x = splines[splineIdx].start.x();
+    y = splines[splineIdx].start.y();
+    double width = scene->width();
+    double height = scene->height();
+
+    double ystart = height / 2 - y * scaleY;
+    double xstart = width / 2 + x * scaleX;
+
+    xA = splines[splineIdx].startAcceleration.x();
+    yA = splines[splineIdx].startAcceleration.y();
+
+    xA = width / 2 + (x + xA) * scaleX;
+    yA = height / 2 - (y + yA) * scaleY;
+
+    xV = splines[splineIdx].startVelocity.x();
+    yV = splines[splineIdx].startVelocity.y();
+
+    xV = width / 2 + (x + xV) * scaleX;
+    yV = height / 2 - (y + yV) * scaleY;
+
+    QBrush brush(Qt::SolidPattern);
+    brush.setColor(*color);
+
+    if (ignore != 6){
+        int type = 6;
+        auto *circle = new ControlPointUI(type, splineIdx, this);
+        circle->setRect(0, 0, 10, 10);
+        circle->setPos(xstart - 5, ystart - 5);
+        circle->setBrush(brush);
+        circle->setPen(*curvePen);
+        circle->setZValue(1000);
+        circle->setOpacity(0.9);
+        circle->setParent(scene);
+        scene->addItem(circle);
+    }
+
+    if (ignore != 7){
+        int type = 7;
+        auto *circleV = new ControlPointUI(type, splineIdx, this);
+        circleV->setRect(0, 0, 10, 10);
+        circleV->setPos(xV - 5, yV - 5);
+        circleV->setBrush(brush);
+        circleV->setPen(*curvePen);
+        circleV->setZValue(1000);
+        circleV->setOpacity(0.9);
+        circleV->setParent(scene);
+        scene->addItem(circleV);
+    }
+
+    if (ignore != 8){
+        int type = 8;
+        auto *circleA = new ControlPointUI(type, splineIdx, this);
+        circleA->setRect(0, 0, 10, 10);
+        circleA->setPos(xA - 5, yA - 5);
+        circleA->setBrush(brush);
+        circleA->setPen(*curvePen);
+        circleA->setZValue(1000);
+        circleA->setOpacity(0.9);
+        circleA->setParent(scene);
+        scene->addItem(circleA);
+    }
+
+
+    QLineF line = QLineF(QPointF(xstart, ystart), QPointF(xA, yA));
+
+    QGraphicsTextItem *text = scene->addText("Acceleration");
+    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
+                 line.p2().y() + 5);
+    scene->addLine(line, *curvePen2);
+
+    line = QLineF(QPointF(xstart, ystart), QPointF(xV, yV));
+    text = scene->addText("Velocity");
+    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
+                 line.p2().y() + 5);
+    scene->addLine(line, *curvePen2);
+
 }
