@@ -62,6 +62,8 @@ QuinticHermiteSpline::QuinticHermiteSpline(QPointF start, QPointF end, QPointF s
     this->endVelocity = endVelocity;
     this->startAcceleration = startAcceleration;
     this->endAcceleration = endAcceleration;
+    // Choose random color
+    this->color = QColor(rand() % 256, rand() % 256, rand() % 256);
 }
 
 

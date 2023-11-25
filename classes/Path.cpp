@@ -6,7 +6,9 @@
 #include "ControlPointUI.h"
 #include <iostream>
 #include <utility>
-
+#include <QPropertyAnimation>
+#include <QTimeLine>
+#include "AnimatedObject.h"
 
 Path::Path(QVector<QuinticHermiteSpline> splineList, MainWindow *parent) {
     this->splines = std::move(splineList);
@@ -66,12 +68,9 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
         for (QuinticHermiteSpline spline: splines) {
             maxX = std::max(maxX, std::max(fabs(spline.start.x()), fabs(spline.end.x())));
         }
-
         // Check if startPoint or endPoint is greater in magnitude
         // The one with the greater magnitude will be used to determine how many x ticks are needed
         scaleX = (width) / (zoom * 2 * fabs(maxX));
-
-
         scaleY = scaleX * (double(height) / width);
     }
 
@@ -83,10 +82,8 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     QPointF prevPoint;
 
     QPen curvePen;
-    curvePen.setWidthF(2.0);       // Set the line width
-    curvePen.setStyle(Qt::SolidLine);  // Set the line style
-
-    QColor colors[3] = {Qt::blue, Qt::red, Qt::green};
+    curvePen.setWidthF(4.0);       // Set the line width
+    curvePen.setStyle(Qt::SolidLine);
 
     for (int idx = 0; idx < splines.size(); idx++) {
         // TODO: Add splines to scene instead of adding them to the group
@@ -97,8 +94,8 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
         }
          */
         QuinticHermiteSpline spline = splines[idx];
-        curvePen.setColor(colors[idx]);
-        drawControlPoints(idx, &colors[idx], &curvePen, ignore);
+        curvePen.setColor(spline.color);
+        drawControlPoints(idx, &spline.color, &curvePen, ignore);
 
 
         for (int i = 0; i <= points; i++) {
@@ -240,13 +237,13 @@ void Path::drawStartControlPoints(QColor *color, QPen *curvePen, int ignore, boo
 
     QLineF line = QLineF(QPointF(xstart, ystart), QPointF(xA, yA));
 
-    QGraphicsTextItem *text = scene->addText("Acceleration");
+    QGraphicsTextItem *text = scene->addText("A");
     text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
                  line.p2().y() + 5);
     scene->addLine(line, *curvePen2);
 
     line = QLineF(QPointF(xstart, ystart), QPointF(xV, yV));
-    text = scene->addText("Velocity");
+    text = scene->addText("V");
     text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
                  line.p2().y() + 5);
     scene->addLine(line, *curvePen2);
@@ -329,15 +326,70 @@ void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen,
 
     QLineF line = QLineF(QPointF(xstart, ystart), QPointF(xA, yA));
 
-    QGraphicsTextItem *text = scene->addText("Acceleration");
+    QGraphicsTextItem *text = scene->addText("A");
     text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
                  line.p2().y() + 5);
     scene->addLine(line, *curvePen2);
 
     line = QLineF(QPointF(xstart, ystart), QPointF(xV, yV));
-    text = scene->addText("Velocity");
+    text = scene->addText("V");
     text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
                  line.p2().y() + 5);
     scene->addLine(line, *curvePen2);
+
+}
+
+void Path::animate(){
+    // animate an object moving along the path
+
+    QGraphicsScene *scene = parent->graphicsScene_;
+    double width = scene->width();
+    double height = scene->height();
+    QBrush brush(Qt::SolidPattern);
+    brush.setColor(Qt::red);
+    double y = splines[0].start.y();
+    double x = splines[0].start.x();
+    double ystart = height / 2 - y * scaleY;
+    double xstart = width / 2 + x * scaleX;
+    double yend = height / 2 - splines[splines.size()-1].end.y() * scaleY;
+    double xend = width / 2 + splines[splines.size()-1].end.x() * scaleX;
+
+    // Create object
+    auto *circle = new AnimatedObject();
+    circle->setRect(0, 0, 20, 20);
+    circle->setPos(xstart, ystart);
+    circle->setZValue(2000);
+    std::cout << xstart << " " << ystart << std::endl;
+    circle->setBrush(brush);
+    scene->addItem(circle);
+
+
+    // Animate object
+
+    auto *animation = new QPropertyAnimation(circle, "pos");
+    animation->setDuration(1000*splines.size());
+    animation->setStartValue(QPointF(xstart, ystart));
+    animation->setEndValue(QPointF(xend, yend));
+
+    int j = 0;
+    for (const QuinticHermiteSpline& spline: splines){
+
+        for (int i = 0; i <= 1000; i++) {
+            double t = i / double(1000);
+            double xp = spline.evaluatePoint(t, &QuinticHermiteSpline::basisFunctions, true);
+            double yp = spline.evaluatePoint(t, &QuinticHermiteSpline::basisFunctions, false);
+
+            yp = double(height) / 2 - yp * scaleY;
+
+            xp = double(width) / 2 + xp * (scaleX);
+
+            animation->setKeyValueAt(double(i+j*1000)/(1000*splines.size()), QPointF(xp, yp));
+        }
+        j++;
+    }
+    QObject::connect(animation, &QPropertyAnimation::finished, [animation]() {
+        delete animation->targetObject();
+    });
+    animation->start();
 
 }

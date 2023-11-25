@@ -9,6 +9,8 @@
 #include <iostream>
 
 QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &value) {
+    std::cout << "itemChange" << std::endl;
+    // Check if an animation is in progress
     double scaleX = parentPath->scaleX;
     double scaleY = parentPath->scaleY;
     int width = parentPath->parent->graphicsScene_->width();
@@ -52,6 +54,7 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
 
         // Remove all items except the control points
         for (QGraphicsItem *item : scene()->items()) {
+            // delete all animations
             if (item->type() != type()) {
                 scene()->removeItem(item);
             } else {

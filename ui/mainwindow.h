@@ -30,6 +30,8 @@ public:
 private slots:
     void sendToRobot();
     void updateZoom() const;
+    void addSpline();
+    void animate() const;
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -41,15 +43,10 @@ private:
     QComboBox* comPort_{};
     QLabel* portLabel_{};
     QSlider* panSlider_{};
-    QLineEdit* startRange_{};
-    QLineEdit* endRange_{};
     QLabel* zoomLabel_{};
     QLabel* panLabel_{};
-    QLabel* startRangeLabel_{};
-    QLabel* endRangeLabel_{};
-    QSlider* resolution_{};
-    QLabel* resolutionLabel_{};
-    QPointF lastClick_{};
+    QPushButton* plusButton_{};
+    QPushButton* animateButton_{};
 
 
 public:
@@ -57,6 +54,5 @@ public:
     QGraphicsScene* graphicsScene_{};
     Path* path_{};
     void drawAxis() const;
-
 };
 

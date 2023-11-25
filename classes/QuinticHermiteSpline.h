@@ -17,6 +17,7 @@ public:
     Waypoint getWaypoint(double time);
     QPointF start;
     QPointF end;
+    QColor color;
 /*
  https://www.rose-hulman.edu/~finn/CCLI/Notes/day09.pdf
  */

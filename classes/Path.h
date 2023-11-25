@@ -4,6 +4,7 @@
 #include <QGraphicsView>
 #include "QuinticHermiteSpline.h"
 #include "../ui/mainwindow.h"
+#include <QTimeLine>
 
 class Path {
 
@@ -11,6 +12,7 @@ public:
     QVector<QuinticHermiteSpline> splines;
     double scaleX;
     double scaleY;
+    QTimeLine *timeLine;
     MainWindow *parent;
     explicit Path(QVector<QuinticHermiteSpline> splines, MainWindow *parent = nullptr);
     void draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, int ignore=-1,  bool changeScale=true, int ignoreIdx = -1, int ignoreIdx2 = -1);
@@ -19,6 +21,7 @@ public:
     void drawControlPoints(int splineIdx, QColor *color, QPen *pen, int ignore);
     void drawStartControlPoints(QColor *color, QPen *pen, int ignore, bool start=true);
     void drawMiddleControlPoints(int splineIdx, QColor *color, QPen *pen, int ignore);
+    void animate();
 };
 
 
