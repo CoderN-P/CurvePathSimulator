@@ -9,7 +9,6 @@
 #include <iostream>
 
 QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &value) {
-    std::cout << "itemChange" << std::endl;
     // Check if an animation is in progress
     double scaleX = parentPath->scaleX;
     double scaleY = parentPath->scaleY;

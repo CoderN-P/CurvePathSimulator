@@ -24,8 +24,11 @@ set(PROJECT_SOURCES
         classes/Path.h
         classes/ControlPointUI.cpp
         classes/ControlPointUI.h
-        classes/AnimatedObject.cpp
         classes/AnimatedObject.h
+        classes/PurePursuit.cpp
+        classes/PurePursuit.h
+        classes/PurePursuitPath.cpp
+        classes/PurePursuitPath.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

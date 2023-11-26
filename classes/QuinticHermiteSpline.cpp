@@ -69,5 +69,5 @@ QuinticHermiteSpline::QuinticHermiteSpline(QPointF start, QPointF end, QPointF s
 
 
 Waypoint QuinticHermiteSpline::getWaypoint(double time) {
-    return {evaluatePoint(time), time, *this};
+    return {time, *this};
 }

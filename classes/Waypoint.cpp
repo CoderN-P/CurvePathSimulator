@@ -1,8 +1,9 @@
 #include "Waypoint.h"
 #include "QuinticHermiteSpline.h"
 
-Waypoint::Waypoint(double y, double time, QuinticHermiteSpline parentSpline) {
-    this->y = y;
+Waypoint::Waypoint(double time, QuinticHermiteSpline parentSpline) {
+    this->y = parentSpline.evaluatePoint(time, &QuinticHermiteSpline::basisFunctions, false);
+    this->x = parentSpline.evaluatePoint(time, &QuinticHermiteSpline::basisFunctions, true);
     this->time = time;
     this->parentSpline = &parentSpline;
 }

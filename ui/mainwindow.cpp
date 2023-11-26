@@ -237,7 +237,7 @@ void MainWindow::updateZoom() const {
 
 void MainWindow::addSpline() {
     QuinticHermiteSpline prevSpline = path_->splines[path_->splines.size()-1];
-    auto *spline = new QuinticHermiteSpline(prevSpline.end, QPointF(prevSpline.end.x()+2, prevSpline.end.y()+2), prevSpline.endVelocity, QPointF(0, 1), prevSpline.endAcceleration, QPointF(0, 1));
+    auto *spline = new QuinticHermiteSpline(prevSpline.end, QPointF(prevSpline.end.x()+2, prevSpline.end.y()+2), prevSpline.endVelocity, QPointF(0, 1), prevSpline.endAcceleration, QPointF(1, 1));
     path_->splines.append(*spline);
     graphicsScene_->clear();
     path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
