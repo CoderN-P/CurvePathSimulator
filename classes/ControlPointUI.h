@@ -1,6 +1,3 @@
-//
-// Created by GreatNeel on 11/22/23.
-//
 #include <QGraphicsEllipseItem>
 #include <QDebug>
 #include <QObject>

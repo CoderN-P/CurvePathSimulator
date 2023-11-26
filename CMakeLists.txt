@@ -29,6 +29,10 @@ set(PROJECT_SOURCES
         classes/PurePursuit.h
         classes/PurePursuitPath.cpp
         classes/PurePursuitPath.h
+        classes/PurePursuitPath.cpp
+        classes/Ramsete.cpp
+        classes/ArduinoClient.cpp
+        classes/ArduinoClient.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

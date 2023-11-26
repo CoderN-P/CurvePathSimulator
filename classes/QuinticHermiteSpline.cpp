@@ -1,7 +1,3 @@
-//
-// Created by GreatNeel on 11/18/23.
-//
-
 #include "QuinticHermiteSpline.h"
 #include <QString>
 #include "Waypoint.h"

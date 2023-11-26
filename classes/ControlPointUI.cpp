@@ -1,7 +1,3 @@
-//
-// Created by GreatNeel on 11/22/23.
-//
-
 #include "ControlPointUI.h"
 #include "Path.h"
 #include "QuinticHermiteSpline.h"

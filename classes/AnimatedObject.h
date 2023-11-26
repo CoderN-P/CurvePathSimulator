@@ -1,7 +1,3 @@
-//
-// Created by GreatNeel on 11/24/23.
-//
-
 #pragma once
 #include <QObject>
 #include <QGraphicsEllipseItem>

@@ -1,6 +1,3 @@
-//
-// Created by GreatNeel on 11/25/23.
-//
 #include <QPointF>
 #include "QuinticHermiteSpline.h"
 #include "Path.h"

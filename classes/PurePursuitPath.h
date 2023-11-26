@@ -1,7 +1,3 @@
-//
-// Created by GreatNeel on 11/25/23.
-//
-
 #pragma once
 #include "Waypoint.h"
 #include <QVector>

@@ -13,6 +13,7 @@ public:
     }
     Waypoint(double time, QuinticHermiteSpline parentSpline);
     double getAngularVelocity();
+    double getTheta();
     double getLinearVelocity(bool useX = true);
     bool operator==(const Waypoint& other) const {
         return time == other.time && x == other.x && y == other.y && parentSpline == other.parentSpline;

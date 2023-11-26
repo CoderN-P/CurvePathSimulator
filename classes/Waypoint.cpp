@@ -26,3 +26,9 @@ double Waypoint::getAngularVelocity() {
         return std::numeric_limits<double>::infinity();  // Example: Return infinity for simplicity
     }
 }
+
+double Waypoint::getTheta() {
+    return atan2(getLinearVelocity(false), getLinearVelocity(true));
+}
+
+
