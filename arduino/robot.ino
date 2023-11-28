@@ -14,8 +14,7 @@ void setup(){
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
-    Serial.begin(9600);
-    Wire.begin(8);
+    Serial.begin(115200);
 
 }
 
@@ -23,3 +22,4 @@ void loop(){
     Wire.onReceive(receiveEvent);
 
 }
+

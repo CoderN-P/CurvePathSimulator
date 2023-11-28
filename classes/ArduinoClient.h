@@ -8,6 +8,7 @@ class ArduinoClient {
 public:
     ArduinoClient(QSerialPort *serialPort);
     RobotPos getPosition();
+    void setVelocity(double left, double right);
 };
 
 

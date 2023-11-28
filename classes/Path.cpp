@@ -72,13 +72,15 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
         // The one with the greater magnitude will be used to determine how many x ticks are needed
         scaleX = (width) / (zoom * 2 * fabs(maxX));
         scaleY = scaleX * (double(height) / width);
+        drawGridLines(scaleX, scaleY, width, height, scene);
+        drawTicksAndLabels(scaleX, scaleY, width, height, scene);
+        parent->drawAxis();
     }
 
     // Draw ticks and labels
-    drawGridLines(scaleX, scaleY, width, height, scene);
-    drawTicksAndLabels(scaleX, scaleY, width, height, scene);
-    parent->drawAxis();
-    auto *group = new QGraphicsItemGroup();
+
+
+
     QPointF prevPoint;
 
     QPen curvePen;
@@ -86,13 +88,10 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     curvePen.setStyle(Qt::SolidLine);
 
     for (int idx = 0; idx < splines.size(); idx++) {
-        // TODO: Add splines to scene instead of adding them to the group
-        // Do this so that individual splines can be removed instead of removing all splines
-        /*
-        if (!((idx != ignoreIdx && ignoreIdx != -1) || (idx != ignoreIdx2 && ignoreIdx2 != -1))){
-            drawControlPoints(idx, &colors[idx], &curvePen, ignore);
+        if (((idx != ignoreIdx && ignoreIdx != -1) && (idx != ignoreIdx2 && ignoreIdx2 != -1))){
+            continue;
         }
-         */
+
         QuinticHermiteSpline spline = splines[idx];
         curvePen.setColor(spline.color);
         drawControlPoints(idx, &spline.color, &curvePen, ignore);
@@ -117,12 +116,12 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
             // get global position of curve
 
             curve->setPen(curvePen);
-            group->addToGroup(curve);
+            curve->setData(0, idx);
+            scene->addItem(curve);
             prevPoint = point;
         }
     }
 
-    scene->addItem(group);
 }
 
 void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int ignore) {
@@ -202,7 +201,7 @@ void Path::drawStartControlPoints(QColor *color, QPen *curvePen, int ignore, boo
 
         circle->setBrush(brush);
         circle->setPen(*curvePen);
-        circle->setZValue(1000);
+        circle->setZValue(500);
         circle->setOpacity(0.9);
         circle->setParent(scene);
         scene->addItem(circle);
@@ -215,7 +214,7 @@ void Path::drawStartControlPoints(QColor *color, QPen *curvePen, int ignore, boo
         circleV->setPos(xV - 5, yV - 5);
         circleV->setBrush(brush);
         circleV->setPen(*curvePen);
-        circleV->setZValue(1000);
+        circleV->setZValue(500);
         circleV->setOpacity(0.9);
         circleV->setParent(scene);
         scene->addItem(circleV);
@@ -228,25 +227,32 @@ void Path::drawStartControlPoints(QColor *color, QPen *curvePen, int ignore, boo
         circleA->setPos(xA - 5, yA - 5);
         circleA->setBrush(brush);
         circleA->setPen(*curvePen);
-        circleA->setZValue(1000);
+        circleA->setZValue(500);
         circleA->setOpacity(0.9);
         circleA->setParent(scene);
         scene->addItem(circleA);
     }
 
 
-    QLineF line = QLineF(QPointF(xstart, ystart), QPointF(xA, yA));
-
+    auto *line = new QGraphicsLineItem(QLineF(QPointF(xstart, ystart), QPointF(xA, yA)));
+    line->setPen(*curvePen2);
+    line->setData(0, idx);
     QGraphicsTextItem *text = scene->addText("A");
-    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
-                 line.p2().y() + 5);
-    scene->addLine(line, *curvePen2);
+    text->setData(0, idx);
+    text->setPos((line->line().p1().x() + line->line().p2().x() - text->boundingRect().width()) / 2,
+                 line->line().p2().y() + 5);
+    scene->addItem(line);
 
-    line = QLineF(QPointF(xstart, ystart), QPointF(xV, yV));
+
+
+    auto *line2 = new QGraphicsLineItem(QLineF(QPointF(xstart, ystart), QPointF(xV, yV)));
+    line2->setData(0, idx);
+    line2->setPen(*curvePen2);
     text = scene->addText("V");
-    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
-                 line.p2().y() + 5);
-    scene->addLine(line, *curvePen2);
+    text->setData(0, idx);
+    text->setPos((line2->line().p1().x() + line2->line().p2().x() - text->boundingRect().width()) / 2,
+                 line2->line().p2().y() + 5);
+    scene->addItem(line2);
 }
 
 void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen, int ignore) {
@@ -291,7 +297,7 @@ void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen,
         circle->setPos(xstart - 5, ystart - 5);
         circle->setBrush(brush);
         circle->setPen(*curvePen);
-        circle->setZValue(1000);
+        circle->setZValue(500);
         circle->setOpacity(0.9);
         circle->setParent(scene);
         scene->addItem(circle);
@@ -304,7 +310,7 @@ void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen,
         circleV->setPos(xV - 5, yV - 5);
         circleV->setBrush(brush);
         circleV->setPen(*curvePen);
-        circleV->setZValue(1000);
+        circleV->setZValue(500);
         circleV->setOpacity(0.9);
         circleV->setParent(scene);
         scene->addItem(circleV);
@@ -317,25 +323,30 @@ void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen,
         circleA->setPos(xA - 5, yA - 5);
         circleA->setBrush(brush);
         circleA->setPen(*curvePen);
-        circleA->setZValue(1000);
+        circleA->setZValue(500);
         circleA->setOpacity(0.9);
         circleA->setParent(scene);
         scene->addItem(circleA);
     }
 
 
-    QLineF line = QLineF(QPointF(xstart, ystart), QPointF(xA, yA));
-
+    auto *line = new QGraphicsLineItem(QLineF(QPointF(xstart, ystart), QPointF(xA, yA)));
+    line->setPen(*curvePen2);
     QGraphicsTextItem *text = scene->addText("A");
-    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
-                 line.p2().y() + 5);
-    scene->addLine(line, *curvePen2);
+    text->setPos((line->line().p1().x() + line->line().p2().x() - text->boundingRect().width()) / 2,
+                 line->line().p2().y() + 5);
+    text->setData(0, splineIdx);
+    line->setData(0, splineIdx);
+    scene->addItem(line);
 
-    line = QLineF(QPointF(xstart, ystart), QPointF(xV, yV));
+    auto *line2 = new QGraphicsLineItem(QLineF(QPointF(xstart, ystart), QPointF(xV, yV)));
     text = scene->addText("V");
-    text->setPos((line.p1().x() + line.p2().x() - text->boundingRect().width()) / 2,
-                 line.p2().y() + 5);
-    scene->addLine(line, *curvePen2);
+    text->setPos((line2->line().p1().x() + line2->line().p2().x() - text->boundingRect().width()) / 2,
+                 line2->line().p2().y() + 5);
+    line2->setPen(*curvePen2);
+    line2->setData(0, splineIdx);
+    text->setData(0, splineIdx);
+    scene->addItem(line2);
 
 }
 

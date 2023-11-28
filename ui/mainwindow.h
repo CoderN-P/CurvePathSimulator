@@ -10,6 +10,7 @@ class QGraphicsScene;
 class QSlider;
 class QLineEdit;
 class Path;
+class PurePursuitPath;
 
 
 
@@ -31,7 +32,7 @@ private slots:
     void sendToRobot();
     void updateZoom() const;
     void addSpline();
-    void animate() const;
+    void animate();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -52,6 +53,8 @@ private:
 public:
     QGraphicsView* graphicsView_{};
     QGraphicsScene* graphicsScene_{};
+    PurePursuitPath* purePursuitPath_{};
+
     Path* path_{};
     void drawAxis() const;
 };

@@ -17,9 +17,11 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
 
     QPointF convertedPos = QPointF(x, y);
 
+
     if (change == 0 && scene()) {
         if (ptype == 0) {
             parentPath->splines[splineIdx].start = convertedPos;
+            std::cout << "start: " << convertedPos.x() << ", " << convertedPos.y() << std::endl;
         } else if (ptype == 1) {
             parentPath->splines[splineIdx].end = convertedPos;
         } else if (ptype == 2) {
@@ -51,11 +53,25 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
         for (QGraphicsItem *item : scene()->items()) {
             // delete all animations
             if (item->type() != type()) {
-                scene()->removeItem(item);
+                if (ptype < 6) {
+                    if (item->data(0) == splineIdx) {
+                        scene()->removeItem(item);
+                    }
+                } else {
+                    if (item->data(0) == splineIdx || item->data(0) == splineIdx-1) {
+                        scene()->removeItem(item);
+                    }
+                }
             } else {
                 auto *controlPoint = dynamic_cast<ControlPointUI *>(item);
-                if (controlPoint->ptype != ptype) {
-                    scene()->removeItem(item);
+                if (ptype < 6) {
+                    if (controlPoint->splineIdx == splineIdx && controlPoint->ptype != ptype) {
+                        scene()->removeItem(item);
+                    }
+                } else {
+                    if ((controlPoint->splineIdx == splineIdx || controlPoint->splineIdx == splineIdx-1) && controlPoint->ptype != ptype) {
+                        scene()->removeItem(item);
+                    }
                 }
             }
         }

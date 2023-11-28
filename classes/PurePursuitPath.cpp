@@ -10,8 +10,7 @@ void PurePursuitPath::generateWaypoints(double spacing) {
     double distance = 0;
     for (int i = 0; i < path->splines.size(); i++) {
         QuinticHermiteSpline spline = path->splines[i];
-        double length = path->splines.size();
-        for (double t = 0; t < length; t += spacing) {
+        for (double t = 0; t < 1; t += spacing) {
             Waypoint point = spline.getWaypoint(t);
             waypoints.append(point);
         }

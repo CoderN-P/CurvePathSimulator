@@ -8,7 +8,8 @@
 #include "../classes/QuinticHermiteSpline.h"
 #include "../classes/Path.h"
 #include "mainwindow.h"
-
+#include "../classes/PurePursuitPath.h"
+#include "../classes/PurePursuit.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -243,8 +244,32 @@ void MainWindow::addSpline() {
     path_->draw(graphicsView_, graphicsScene_, zoomSlider_->value(), 1000);
 }
 
-void MainWindow::animate() const {
-    path_->animate();
-}
+void MainWindow::animate() {
+    purePursuitPath_ = new PurePursuitPath(path_);
+    purePursuitPath_->generateWaypoints(0.1);
+    auto *robotGroup = new QGraphicsItemGroup();
+    double xstart = path_->splines[0].start.x();
+    double ystart = path_->splines[0].start.y();
+    double scaleX = path_->scaleX;
+    double scaleY = path_->scaleY;
+    double width = graphicsView_->width();
+    double height = graphicsView_->height();
+    double x = double(width) / 2 + xstart * (scaleX);
+    double y = double(height) / 2 - ystart * scaleY;
+    auto *robot = new QGraphicsEllipseItem(x-10, y-10, 20, 20);
+    robot->setBrush(QBrush(Qt::red));
+    robot->setPen(QPen(Qt::red));
+    robot->setZValue(999);
+    // calculate angle of robot
 
+    double theta = purePursuitPath_->waypoints[0].getTheta();
+    std::cout << theta << std::endl;
+    auto *robotHeading = new QGraphicsLineItem(x, y, x+30*cos(theta), y-30*sin(theta));
+    robotHeading->setZValue(1000);
+    robotHeading->setPen(QPen(Qt::black));
+    robotGroup->addToGroup(robot);
+    robotGroup->addToGroup(robotHeading);
+    graphicsScene_->addItem(robotGroup);
+
+}
 

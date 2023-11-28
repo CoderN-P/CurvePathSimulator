@@ -1,5 +1,6 @@
 #include "Waypoint.h"
 #include "QuinticHermiteSpline.h"
+#include <iostream>
 
 Waypoint::Waypoint(double time, QuinticHermiteSpline parentSpline) {
     this->y = parentSpline.evaluatePoint(time, &QuinticHermiteSpline::basisFunctions, false);
@@ -8,8 +9,8 @@ Waypoint::Waypoint(double time, QuinticHermiteSpline parentSpline) {
     this->parentSpline = &parentSpline;
 }
 
-double Waypoint::getLinearVelocity(bool useX) {
-    return (*parentSpline).evaluateDerivative(time, 1, useX);
+double Waypoint::getLinearVelocity(bool useX) const {
+    return parentSpline->evaluateDerivative(time, 1, useX);
 }
 
 double Waypoint::getAngularVelocity() {

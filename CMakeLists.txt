@@ -33,6 +33,8 @@ set(PROJECT_SOURCES
         classes/Ramsete.cpp
         classes/ArduinoClient.cpp
         classes/ArduinoClient.h
+        classes/RobotPos.cpp
+        classes/RobotPos.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

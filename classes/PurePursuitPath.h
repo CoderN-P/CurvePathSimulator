@@ -2,6 +2,7 @@
 #include "Waypoint.h"
 #include <QVector>
 #include <QPointF>
+
 class Path;
 
 /*

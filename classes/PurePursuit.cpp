@@ -1,6 +1,7 @@
 #include "PurePursuitPath.h"
 #include "Path.h"
 #include "PurePursuit.h"
+#include "RobotPos.h"
 #include "ArduinoClient.h"
 
 PurePursuit::PurePursuit(double kdd, double minldd, double maxldd, double l, double R, PurePursuitPath *path, ArduinoClient *arduinoClient) {
@@ -12,11 +13,11 @@ PurePursuit::PurePursuit(double kdd, double minldd, double maxldd, double l, dou
     this->wheelRadius = R;
     Waypoint start = path->path->splines[0].getWaypoint(0);
     // Assume the robot starts at the beginning of the path
-    this->curPos = RobotPos(start.x, start.y, start.getTheta(), 0, 0, l);
     this->L = l;
-    this->arduinoClient = arduinoClient
+    this->arduinoClient = arduinoClient;
 
 }
+
 double PurePursuit::getKdd() const {
     return kdd;
 }
@@ -27,15 +28,16 @@ void PurePursuit::setKdd(double kdd) {
 
 double PurePursuit::run() {
     // Step 1. Compute lookahead distance
-    if (curSpeed * kdd < minldd) {
+    curPos = arduinoClient->getPosition();
+
+    if (curPos.velocity * kdd < minldd) {
         lookaheadDistance = minldd;
     } else if (curSpeed * kdd > maxldd) {
         lookaheadDistance = maxldd;
     } else {
-        lookaheadDistance = curSpeed * kdd;
+        lookaheadDistance = curPos.velocity * kdd;
     }
 
-    curPos = arduinoClient->getPosition();
 
     // Step 2. Find the point on the path that is closest to the lookahead distance
     Waypoint closestPoint = path->getClosestPoint(QPointF(curPos.x(), curPos.y()));
@@ -75,6 +77,8 @@ double PurePursuit::run() {
 
     // TODO: Send vChangeLeft and vChangeRight to the arduino
 
+    arduinoClient->setVelocity(vChangeLeft, vChangeRight);
+    return delta;
 }
 
 

@@ -40,11 +40,15 @@ double QuinticHermiteSpline::evaluateDerivative(double t, int order, bool x) {
     double customBasisFunctions[6][6];
     std::memcpy(customBasisFunctions, basisFunctions, sizeof(basisFunctions));
 
-    for (int i = 0; i < order; i++){
-        for (int j = 0; j < 6; j++){
-            customBasisFunctions[i][j] *= j;
+    for (int o = 0; o < order; o++){
+        for (int i = 0; i < 6; i++){
+            for (int j = 0; j < 5-o; j++){
+                customBasisFunctions[i][j] = customBasisFunctions[i][j+1]*(j+1);
+            }
+            customBasisFunctions[i][5-o] = 0;
         }
     }
+
 
     return evaluatePoint(t, &customBasisFunctions, x);
 }
