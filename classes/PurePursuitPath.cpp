@@ -2,39 +2,164 @@
 #include "QuinticHermiteSpline.h"
 #include "Path.h"
 #include "PurePursuitPath.h"
+#include <iostream>
 
 
 PurePursuitPath::PurePursuitPath(Path *path) : path(path) {}
 
 void PurePursuitPath::generateWaypoints(double spacing) {
-    double distance = 0;
-    for (int i = 0; i < path->splines.size(); i++) {
-        QuinticHermiteSpline spline = path->splines[i];
-        for (double t = 0; t < 1; t += spacing) {
-            Waypoint point = spline.getWaypoint(t);
-            waypoints.append(point);
+    int i = 0;
+    for (QuinticHermiteSpline& curSpline : path->splines) {
+        if (i == 0) {
+            waypoints.append(curSpline.getWaypoint(0));
         }
+        double t = 0;
+        while (t < 1) {
+            double dist = 0;
+
+            double x1 = curSpline.evaluatePoint(t, &QuinticHermiteSpline::basisFunctions, true);
+            double y1 = curSpline.evaluatePoint(t, &QuinticHermiteSpline::basisFunctions, false);
+
+            while (dist < spacing) {
+                double step = 0.001;
+                double curvature = curSpline.evaluateCurvature(t);
+                if (curvature != 0) {
+                    step = 0.001/curvature;
+                }
+                double x2 = curSpline.evaluatePoint(t + step, &QuinticHermiteSpline::basisFunctions, true);
+                double y2 = curSpline.evaluatePoint(t + step, &QuinticHermiteSpline::basisFunctions, false);
+                double dx = x2 - x1;
+                double dy = y2 - y1;
+                dist += pow(pow(dx, 2) + pow(dy, 2), 0.5);
+                t += step;
+                x1 = x2;
+                y1 = y2;
+            }
+            if (t > 1) {
+                t = 1;
+            }
+            waypoints.append(curSpline.getWaypoint(t));
+        }
+        i++;
+    }
+
+    // Add the last point
+    waypoints.append(path->splines[path->splines.size()-1].getWaypoint(1));
+
+    // Draw the waypoints
+
+    for (Waypoint waypoint : waypoints) {
+        QGraphicsScene *scene = path->parent->graphicsScene_;
+        double scaleX = path->scaleX;
+        double scaleY = path->scaleY;
+        double width = path->parent->graphicsView_->width();
+        double height = path->parent->graphicsView_->height();
+        double x = waypoint.x*scaleX + width/2;
+        double y = -waypoint.y*scaleY + height/2;
+        scene->addEllipse(x-2, y-2, 4, 4, QPen(Qt::black), QBrush(Qt::black));
     }
 }
 
-Waypoint PurePursuitPath::getClosestPoint(QPointF point) {
-    Waypoint closestPoint = waypoints[0];
-    double closestDistance = sqrt(pow(point.x() - closestPoint.x, 2) + pow(point.y() - closestPoint.y, 2));
-    for (int i = 1; i < waypoints.size(); i++) {
-        Waypoint curPoint = waypoints[i];
-        double distance = sqrt(pow(point.x() - curPoint.x, 2) + pow(point.y() - curPoint.y, 2));
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestPoint = curPoint;
-        }
+int sign(double x) {
+    if (x < 0) {
+        return -1;
     }
-    return closestPoint;
+    return 1;
 }
 
-Waypoint PurePursuitPath::getNextPoint(Waypoint point) {
-    int index = waypoints.indexOf(point);
-    if (index == waypoints.size() - 1) {
-        return waypoints[index];
+QVector<QPointF> PurePursuitPath::findIntersectPoints(QPointF curPoint, QPointF p1, QPointF p2, double lookaheadDistance) {
+    p2.setX(p2.x()-curPoint.x());
+    p2.setY(p2.y()-curPoint.y());
+    p1.setX(p1.x()-curPoint.x());
+    p1.setY(p1.y()-curPoint.y());
+
+    double dx = p2.x() - p1.x();
+    double dy = p2.y() - p1.y();
+
+    double a = dx*dx + dy*dy;
+    double dr = pow(a, 0.5);
+    double D = p1.x()*p2.y() - p2.x()*p1.y();
+    double discriminant = pow(lookaheadDistance, 2)*pow(dr, 2) - pow(D, 2);
+
+    if (discriminant < 0) {
+        return {};
     }
-    return waypoints[index + 1];
+    double x1 = (D*dy + sign(dy)*dx*pow(discriminant, 0.5))/a;
+    double x2 = (D*dy - sign(dy)*dx*pow(discriminant, 0.5))/a;
+    double y1 = (-D*dx + abs(dy)*pow(discriminant, 0.5))/a;
+    double y2 = (-D*dx - abs(dy)*pow(discriminant, 0.5))/a;
+
+    QPointF sol1 = QPointF(x1+curPoint.x(), y1+curPoint.y());
+    QPointF sol2 = QPointF(x2+curPoint.x(), y2+curPoint.y());
+
+    return QVector<QPointF>{sol1, sol2};
+
+
+}
+
+double distance(QPointF p1, QPointF p2) {
+    return pow(pow(p1.x() - p2.x(), 2) + pow(p1.y() - p2.y(), 2), 0.5);
+}
+
+
+QVector<double> PurePursuitPath::findGoalPoint(QPointF curPos, double lookaheadDistance, int lastFoundIndex) {
+    // Step 1. Find the goal point
+
+    QPointF goalPoint;
+    bool intersectFound = false;
+    int curIndex = lastFoundIndex;
+
+    for (int i = curIndex; i < waypoints.size()-1; i++) {
+        Waypoint waypoint = waypoints[i];
+        Waypoint nextWaypoint = waypoints[i+1];
+        QVector<QPointF> circleIntersect = findIntersectPoints(curPos, QPointF(waypoint.x, waypoint.y), QPointF(nextWaypoint.x, nextWaypoint.y), lookaheadDistance);
+        if (circleIntersect.empty()) {
+            continue;
+        }
+        if (circleIntersect[0].isNull() && circleIntersect[1].isNull()) {
+            continue;
+        }
+
+        double minX = std::min(waypoint.x, nextWaypoint.x);
+        double maxX = std::max(waypoint.x, nextWaypoint.x);
+        double minY = std::min(waypoint.y, nextWaypoint.y);
+        double maxY = std::max(waypoint.y, nextWaypoint.y);
+
+        if ((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) || (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)) {
+            intersectFound = true;
+            if ((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) && (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)){
+                // Both x and y are in the range
+                // Choose the one that is closer to the next waypoint
+                if (distance(circleIntersect[0], QPointF(nextWaypoint.x, nextWaypoint.y)) < distance(circleIntersect[1], QPointF(nextWaypoint.x, nextWaypoint.y))) {
+                    goalPoint = circleIntersect[0];
+                } else {
+                    goalPoint = circleIntersect[1];
+                }
+
+            } else {
+                // Only one of x and y is in the range
+                if (circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) {
+                    goalPoint = circleIntersect[0];
+                } else {
+                    goalPoint = circleIntersect[1];
+                }
+            }
+
+            if (distance(goalPoint, QPointF(nextWaypoint.x, nextWaypoint.y)) < distance(curPos, QPointF(nextWaypoint.x, nextWaypoint.y))) {
+                lastFoundIndex = i;
+                break;
+            } else {
+                lastFoundIndex = i+1;
+            }
+        } else {
+            intersectFound = false;
+            goalPoint = QPointF(waypoints[lastFoundIndex].x, waypoints[lastFoundIndex].y);
+        }
+
+
+        curIndex++;
+    }
+
+
+    return {goalPoint.x(), goalPoint.y(), double(lastFoundIndex)};
 }

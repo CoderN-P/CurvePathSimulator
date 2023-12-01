@@ -18,6 +18,6 @@ public:
     QVector<Waypoint> waypoints;
     PurePursuitPath(Path *path);
     void generateWaypoints(double spacing);
-    Waypoint getClosestPoint(QPointF point);
-    Waypoint getNextPoint(Waypoint point);
+    static QVector<QPointF> findIntersectPoints(QPointF curPoint, QPointF p1, QPointF p2, double lookaheadDistance);
+    QVector<double> findGoalPoint(QPointF curPos, double lookaheadDistance, int lastFoundIndex);
 };

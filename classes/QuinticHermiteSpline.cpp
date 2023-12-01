@@ -66,7 +66,22 @@ QuinticHermiteSpline::QuinticHermiteSpline(QPointF start, QPointF end, QPointF s
     this->color = QColor(rand() % 256, rand() % 256, rand() % 256);
 }
 
+double QuinticHermiteSpline::evaluateCurvature(double t) {
+    double xp = evaluateDerivative(t, 1, true);
+    double xpp = evaluateDerivative(t, 2, true);
+    double yp = evaluateDerivative(t, 1, false);
+    double ypp = evaluateDerivative(t, 2, false);
 
+    double numerator = std::abs(xp*ypp - yp*xpp);
+    double denominator = pow(pow(xp, 2) + pow(yp, 2), 1.5);
+
+    if (denominator == 0) {
+        return 0;
+    }
+
+    return numerator/denominator;
+
+}
 
 Waypoint QuinticHermiteSpline::getWaypoint(double time) {
     return {time, *this};

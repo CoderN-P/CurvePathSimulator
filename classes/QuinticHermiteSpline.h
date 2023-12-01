@@ -15,6 +15,7 @@ public:
     double evaluateDerivative(double t, int order, bool x);
     double evaluatePoint(double p, const double (*customBasisFunctions)[6][6] = &basisFunctions, bool x = true) const;
     Waypoint getWaypoint(double time);
+    double evaluateCurvature(double t);
     QPointF start;
     QPointF end;
     QColor color;

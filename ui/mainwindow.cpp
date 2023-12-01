@@ -9,6 +9,7 @@
 #include "../classes/Path.h"
 #include "mainwindow.h"
 #include "../classes/PurePursuitPath.h"
+#include "../classes/RobotPos.h"
 #include "../classes/PurePursuit.h"
 
 
@@ -16,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
 {
     setMouseTracking(true);
+
+
 
     button_ = new QPushButton(tr("Send to robot"), this);
     button_->setGeometry(QRect(QPoint(100, 100),
@@ -181,6 +184,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     setWindowTitle(tr("Robot Path Planner"));
 
+
+
 };
 
 MainWindow::~MainWindow()
@@ -246,7 +251,10 @@ void MainWindow::addSpline() {
 
 void MainWindow::animate() {
     purePursuitPath_ = new PurePursuitPath(path_);
-    purePursuitPath_->generateWaypoints(0.1);
+    purePursuitPath_->generateWaypoints(0.33);
+    double lookaheadDistance = 0.33;
+    double linearVelocity = 50;
+    double dt = 50; // ms
     auto *robotGroup = new QGraphicsItemGroup();
     double xstart = path_->splines[0].start.x();
     double ystart = path_->splines[0].start.y();
@@ -256,20 +264,87 @@ void MainWindow::animate() {
     double height = graphicsView_->height();
     double x = double(width) / 2 + xstart * (scaleX);
     double y = double(height) / 2 - ystart * scaleY;
-    auto *robot = new QGraphicsEllipseItem(x-10, y-10, 20, 20);
+    auto *robot = new QGraphicsEllipseItem(x-15, y-15, 30, 30);
     robot->setBrush(QBrush(Qt::red));
     robot->setPen(QPen(Qt::red));
-    robot->setZValue(999);
+    robot->setZValue(2000);
     // calculate angle of robot
 
-    double theta = purePursuitPath_->waypoints[0].getTheta();
-    std::cout << theta << std::endl;
-    auto *robotHeading = new QGraphicsLineItem(x, y, x+30*cos(theta), y-30*sin(theta));
-    robotHeading->setZValue(1000);
-    robotHeading->setPen(QPen(Qt::black));
+    double theta = atan2(path_->splines[0].startVelocity.y(), path_->splines[0].startVelocity.x());
+
+    auto *robotHeading = new QGraphicsLineItem(x, y, x+lookaheadDistance*scaleX*cos(theta), y-lookaheadDistance*scaleY*sin(theta));
+    robotHeading->setZValue(2001);
+    robotHeading->setPen(QPen(Qt::gray, 2));
     robotGroup->addToGroup(robot);
     robotGroup->addToGroup(robotHeading);
     graphicsScene_->addItem(robotGroup);
+
+    auto* serialPort_ = new QSerialPort(comPort_->currentText());
+    auto* arduinoClient = new ArduinoClient(serialPort_);
+
+    auto* purePursuit = new PurePursuit(lookaheadDistance, 1, 1, purePursuitPath_, arduinoClient);
+
+    auto* robotPos = new RobotPos(xstart, ystart, theta*180/M_PI, 0, 0, 0.5);
+
+    // Control loop
+    int lastFoundIndex = 0;
+
+    // model: 200rpm drive with 18" width
+    //                  rpm   /s  circ   feet
+    double maxLinVelfeet = double(200) / 60 * M_PI*4 / 12;
+    //                  rpm  /s  center angle   deg
+    double maxTurnVelDeg = double(200) / 60 * M_PI*4 / 9 *180/M_PI;
+
+    // Create look ahead circle
+    auto* circle = new QGraphicsEllipseItem(x-lookaheadDistance*scaleX, y-lookaheadDistance*scaleY, 2*lookaheadDistance*scaleX, 2*lookaheadDistance*scaleY);
+    circle->setPen(QPen(Qt::gray, 2, Qt::DashLine));
+    graphicsScene_->addItem(circle);
+
+    auto *goalPointCircle = new QGraphicsEllipseItem(0, 0, 10, 10);
+    goalPointCircle->setBrush(QBrush(Qt::green));
+    graphicsScene_->addItem(goalPointCircle);
+
+
+    while (true) {
+        if (lastFoundIndex == purePursuitPath_->waypoints.size()-2) {
+            break;
+        }
+        std::cout << "Last found index: " << lastFoundIndex << std::endl;
+        QVector<double> data = purePursuit->run(robotPos, lastFoundIndex);
+        QPointF goalPoint = QPointF(data[0], data[1]);
+        double turnVel = data[2];
+        lastFoundIndex = data[3];
+
+        double stepDist = linearVelocity/100 * maxLinVelfeet * dt/1000;
+        robotPos->setX(robotPos->x() + stepDist*cos(robotPos->theta*M_PI/180));
+        robotPos->setY(robotPos->y() + stepDist*sin(robotPos->theta*M_PI/180));
+
+        double newX = robotPos->x()*scaleX + width/2;
+        double newY = -robotPos->y()*scaleY + height/2;
+
+        std::cout << "Goal point: " << goalPoint.x() << ", " << goalPoint.y() << std::endl;
+
+        // Update robot heading line
+        robotHeading->setLine(newX, newY, newX+lookaheadDistance*scaleX*cos(robotPos->theta*M_PI/180), newY-lookaheadDistance*scaleY*sin(robotPos->theta*M_PI/180));
+        // Update robot position
+        robot->setRect(newX-15, newY-15, 30, 30);
+        // Update lookahead circle
+        circle->setRect(newX-lookaheadDistance*scaleX, newY-lookaheadDistance*scaleY, 2*lookaheadDistance*scaleY, 2*lookaheadDistance*scaleX);
+
+        // Update goal point circle
+        goalPointCircle->setRect(goalPoint.x()*scaleX + width/2 - 5, -goalPoint.y()*scaleX + height/2 - 5, 10, 10);
+
+        // Update robot angle
+        robotPos->theta += (turnVel/100 * maxTurnVelDeg * dt/1000);
+        robotPos->theta = fmod(robotPos->theta, 360);
+        if (robotPos->theta < 0) {
+            robotPos->theta += 360;
+        }
+
+        QCoreApplication::processEvents();
+        QThread::msleep(dt);
+    }
+
 
 }
 

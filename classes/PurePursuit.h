@@ -9,8 +9,6 @@ class PurePursuitPath;
 class PurePursuit {
     double lookaheadDistance;
     double kdd;
-    double minldd;
-    double maxldd;
     double curSpeed;
     double wheelRadius;
     ArduinoClient *arduinoClient;
@@ -19,9 +17,8 @@ class PurePursuit {
     double L;
 
 public:
-    PurePursuit(double kdd, double minldd, double maxldd, double l, double r, PurePursuitPath *path, ArduinoClient *arduinoClient);
-    double getKdd() const;
-    void setKdd(double kdd);
-    double run();
+    PurePursuit(double lookaheadDistance, double l, double r, PurePursuitPath *path, ArduinoClient *arduinoClient);
+
+    QVector<double> run(RobotPos *pos = nullptr, int lastFoundIndex = 0);
 };
 

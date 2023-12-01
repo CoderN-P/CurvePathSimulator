@@ -12,8 +12,8 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
     int height = parentPath->parent->graphicsScene_->height();
 
     QPointF newPos = scenePos();
-    double y = (newPos.y() - double(height)/2)/-scaleY;
-    double x = (newPos.x() - double(width)/2)/scaleX;
+    double y = (newPos.y() + 5 - double(height)/2)/-scaleY;
+    double x = (newPos.x() + 5 - double(width)/2)/scaleX;
 
     QPointF convertedPos = QPointF(x, y);
 
@@ -21,7 +21,6 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
     if (change == 0 && scene()) {
         if (ptype == 0) {
             parentPath->splines[splineIdx].start = convertedPos;
-            std::cout << "start: " << convertedPos.x() << ", " << convertedPos.y() << std::endl;
         } else if (ptype == 1) {
             parentPath->splines[splineIdx].end = convertedPos;
         } else if (ptype == 2) {
@@ -76,7 +75,7 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
             }
         }
 
-        int ignoreIdx = -1;
+        int ignoreIdx;
         int ignoreIdx2 = -1;
         if (ptype < 6){
             ignoreIdx = splineIdx;

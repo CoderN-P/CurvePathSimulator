@@ -3,11 +3,10 @@
 #include "PurePursuit.h"
 #include "RobotPos.h"
 #include "ArduinoClient.h"
+#include <iostream>
 
-PurePursuit::PurePursuit(double kdd, double minldd, double maxldd, double l, double R, PurePursuitPath *path, ArduinoClient *arduinoClient) {
-    this->kdd = kdd;
-    this->minldd = minldd;
-    this->maxldd = maxldd;
+PurePursuit::PurePursuit(double lookaheadDistance, double l, double R, PurePursuitPath *path, ArduinoClient *arduinoClient) {
+    this->lookaheadDistance = lookaheadDistance;
     this->curSpeed = 0;
     this->path = path;
     this->wheelRadius = R;
@@ -18,67 +17,44 @@ PurePursuit::PurePursuit(double kdd, double minldd, double maxldd, double l, dou
 
 }
 
-double PurePursuit::getKdd() const {
-    return kdd;
+double findMinAngle(double absTargetAngle, double curAngle) {
+    double diff = absTargetAngle - curAngle;
+
+    if (diff > 180) {
+        diff -= 360;
+    } else if (diff < -180) {
+        diff += 360;
+    }
 }
 
-void PurePursuit::setKdd(double kdd) {
-    PurePursuit::kdd = kdd;
-}
 
-double PurePursuit::run() {
-    // Step 1. Compute lookahead distance
-    curPos = arduinoClient->getPosition();
-
-    if (curPos.velocity * kdd < minldd) {
-        lookaheadDistance = minldd;
-    } else if (curSpeed * kdd > maxldd) {
-        lookaheadDistance = maxldd;
+QVector<double> PurePursuit::run(RobotPos *pos, int lastFoundIndex) {
+    if (!pos->isNull()) {
+        curPos = *pos;
     } else {
-        lookaheadDistance = curPos.velocity * kdd;
+        curPos = arduinoClient->getPosition();
     }
 
+    // Step 1. Find the goal point
+    QVector<double> data = path->findGoalPoint(QPointF(curPos.x(), curPos.y()), lookaheadDistance, lastFoundIndex);
 
-    // Step 2. Find the point on the path that is closest to the lookahead distance
-    Waypoint closestPoint = path->getClosestPoint(QPointF(curPos.x(), curPos.y()));
-    Waypoint curPoint = closestPoint;
+    QPointF goalPoint = QPointF(data[0], data[1]);
+    lastFoundIndex = data[2];
 
-    while (true) {
-        double distance = sqrt(pow(curPoint.x - closestPoint.x, 2) + pow(curPoint.y - closestPoint.y, 2));
-        if (distance > lookaheadDistance) {
-            break;
-        }
-        Waypoint temp = path->getNextPoint(curPoint);
-        if (temp == curPoint) {
-            break;
-        }
-        curPoint = temp;
+    double Kp = 3;
+    double absTargetAngle = atan2(goalPoint.y() - curPos.y(), goalPoint.x() - curPos.x())*180/M_PI;
+    double curAngle = curPos.theta;
+    double diff = absTargetAngle - curAngle;
+
+    if (diff > 180) {
+        diff -= 360;
+    } else if (diff < -180) {
+        diff += 360;
     }
 
-    // curPoint is now the target point
+    double turn = Kp*diff;
 
-    double alpha = atan2(curPoint.y - curPos.y(), curPoint.x - curPos.x());
-
-    // delta is the angle between the robot's heading and the line between the robot and the target point
-    double delta = atan2(2 * L * sin(alpha), lookaheadDistance);
-
-    // Step 3. Calculate required change in linear and angular velocity
-    double xV = curPoint.getLinearVelocity();
-    double yV = curPoint.getLinearVelocity(false);
-
-    QPointF robotXYVel = curPos.getXYVelocity();
-    double xVelChange = xV - robotXYVel.x();
-    double yVelChange = yV - robotXYVel.y();
-    double velocityChange = cos(delta) * xVelChange + sin(delta) * yVelChange;
-    double angularVelocityChange = (sin(delta) * xVelChange - cos(delta) * yVelChange) / L;
-
-    double vChangeLeft = 2*velocityChange - angularVelocityChange*L;
-    double vChangeRight = 2*velocityChange + angularVelocityChange*L;
-
-    // TODO: Send vChangeLeft and vChangeRight to the arduino
-
-    arduinoClient->setVelocity(vChangeLeft, vChangeRight);
-    return delta;
+    return QVector<double>({goalPoint.x(), goalPoint.y(), turn, double(lastFoundIndex)});
 }
 
 

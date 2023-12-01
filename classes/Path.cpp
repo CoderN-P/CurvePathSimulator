@@ -30,6 +30,9 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
     int xAmount = width / scaleX;
     int yAmount = height / scaleY;
 
+
+    std::cout << xAmount << " " << yAmount << std::endl;
+
     int xDigits = int(log10(xAmount/2));
     // Check if xAmount is a power of 10 greater than 1
     if (xAmount / 2 == pow(10, xDigits) && xDigits > 0) {
@@ -50,12 +53,33 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
             text->setPos(i * scaleX, height / 2 + 10);
         }
     }
+
+    int yDigits = int(log10(yAmount/2));
+    // Check if yAmount is a power of 10 greater than 1
+    if (yAmount / 2 == pow(10, yDigits) && yDigits > 0) {
+        yDigits--;
+    }
+
+
+    for (int i = 1; i <= yAmount; i++) {
+        if (i == yAmount / 2 || i % int(pow(10, yDigits)) != 0) {
+            continue;
+        }
+        if (i < yAmount / 2) {
+            scene->addLine(width / 2 - 5, height / 2 - i * scaleY, width / 2 + 5, height / 2 - i * scaleY);
+            QGraphicsTextItem *text = scene->addText(QString::number(i));
+            text->setPos(width / 2 - 20, height / 2 - i * scaleY);
+        } else {
+            scene->addLine(width / 2 - 5, i * scaleY, width / 2 + 5, i * scaleY);
+            QGraphicsTextItem *text = scene->addText(QString::number(-i+yAmount/2));
+            text->setPos(width / 2 - 20, i * scaleY);
+        }
+    }
 }
 
 
 
 void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int points, int ignore, bool changeScale, int ignoreIdx, int ignoreIdx2){
-
     int height = view->height();
     int width = view->width();
 
@@ -71,15 +95,13 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
         // Check if startPoint or endPoint is greater in magnitude
         // The one with the greater magnitude will be used to determine how many x ticks are needed
         scaleX = (width) / (zoom * 2 * fabs(maxX));
-        scaleY = scaleX * (double(height) / width);
+        scaleY = scaleX;
         drawGridLines(scaleX, scaleY, width, height, scene);
         drawTicksAndLabels(scaleX, scaleY, width, height, scene);
         parent->drawAxis();
     }
 
     // Draw ticks and labels
-
-
 
     QPointF prevPoint;
 
@@ -88,13 +110,22 @@ void Path::draw(QGraphicsView *view, QGraphicsScene *scene, double zoom, int poi
     curvePen.setStyle(Qt::SolidLine);
 
     for (int idx = 0; idx < splines.size(); idx++) {
-        if (((idx != ignoreIdx && ignoreIdx != -1) && (idx != ignoreIdx2 && ignoreIdx2 != -1))){
-            continue;
+        if (idx != ignoreIdx && ignoreIdx != -1){
+            if (ignoreIdx2 == -1) {
+                continue;
+            }
+        }
+        if (idx != ignoreIdx2 && ignoreIdx2 != -1){
+            if (ignoreIdx == -1) {
+                continue;
+            }
         }
 
         QuinticHermiteSpline spline = splines[idx];
         curvePen.setColor(spline.color);
+
         drawControlPoints(idx, &spline.color, &curvePen, ignore);
+
 
 
         for (int i = 0; i <= points; i++) {
@@ -130,10 +161,13 @@ void Path::drawControlPoints(int splineIdx, QColor *color, QPen *curvePen, int i
     }
     if (splineIdx == 0) {
         drawStartControlPoints(color, curvePen, ignore);
-    } else if (splineIdx == splines.size() - 1) {
+    }
+    if (splineIdx == splines.size() - 1) {
         drawStartControlPoints(color, curvePen, ignore, false);
         drawMiddleControlPoints(splineIdx, color, curvePen, ignore);
-    } else {
+    }
+
+    if (splineIdx != 0 && splineIdx != splines.size() - 1) {
         drawMiddleControlPoints(splineIdx, color, curvePen, ignore);
     }
 }
@@ -233,30 +267,27 @@ void Path::drawStartControlPoints(QColor *color, QPen *curvePen, int ignore, boo
         scene->addItem(circleA);
     }
 
-
     auto *line = new QGraphicsLineItem(QLineF(QPointF(xstart, ystart), QPointF(xA, yA)));
     line->setPen(*curvePen2);
-    line->setData(0, idx);
     QGraphicsTextItem *text = scene->addText("A");
-    text->setData(0, idx);
     text->setPos((line->line().p1().x() + line->line().p2().x() - text->boundingRect().width()) / 2,
                  line->line().p2().y() + 5);
+    text->setData(0, idx);
+    line->setData(0, idx);
     scene->addItem(line);
 
-
-
     auto *line2 = new QGraphicsLineItem(QLineF(QPointF(xstart, ystart), QPointF(xV, yV)));
-    line2->setData(0, idx);
-    line2->setPen(*curvePen2);
     text = scene->addText("V");
-    text->setData(0, idx);
     text->setPos((line2->line().p1().x() + line2->line().p2().x() - text->boundingRect().width()) / 2,
                  line2->line().p2().y() + 5);
+    line2->setPen(*curvePen2);
+    line2->setData(0, idx);
+    text->setData(0, idx);
     scene->addItem(line2);
 }
 
 void Path::drawMiddleControlPoints(int splineIdx, QColor *color, QPen *curvePen, int ignore) {
-    if (splines.isEmpty()){
+    if (splines.isEmpty() || splineIdx == 0){
         return;
     }
     QPen *curvePen2 = new QPen();
