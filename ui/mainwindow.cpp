@@ -252,7 +252,7 @@ void MainWindow::addSpline() {
 void MainWindow::animate() {
     purePursuitPath_ = new PurePursuitPath(path_);
     purePursuitPath_->generateWaypoints(0.33);
-    double lookaheadDistance = 0.33;
+    double lookaheadDistance = 0.5;
     double linearVelocity = 50;
     double dt = 50; // ms
     auto *robotGroup = new QGraphicsItemGroup();
@@ -304,9 +304,9 @@ void MainWindow::animate() {
     goalPointCircle->setBrush(QBrush(Qt::green));
     graphicsScene_->addItem(goalPointCircle);
 
-
+    // TODO: Fix bug where robot loops in circles at a random point in the path
     while (true) {
-        if (lastFoundIndex == purePursuitPath_->waypoints.size()-2) {
+        if (lastFoundIndex > purePursuitPath_->waypoints.size()-2) {
             break;
         }
         std::cout << "Last found index: " << lastFoundIndex << std::endl;
@@ -322,7 +322,6 @@ void MainWindow::animate() {
         double newX = robotPos->x()*scaleX + width/2;
         double newY = -robotPos->y()*scaleY + height/2;
 
-        std::cout << "Goal point: " << goalPoint.x() << ", " << goalPoint.y() << std::endl;
 
         // Update robot heading line
         robotHeading->setLine(newX, newY, newX+lookaheadDistance*scaleX*cos(robotPos->theta*M_PI/180), newY-lookaheadDistance*scaleY*sin(robotPos->theta*M_PI/180));
@@ -343,8 +342,7 @@ void MainWindow::animate() {
 
         QCoreApplication::processEvents();
         QThread::msleep(dt);
+
     }
-
-
 }
 

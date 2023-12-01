@@ -81,16 +81,20 @@ QVector<QPointF> PurePursuitPath::findIntersectPoints(QPointF curPoint, QPointF 
     double D = p1.x()*p2.y() - p2.x()*p1.y();
     double discriminant = pow(lookaheadDistance, 2)*pow(dr, 2) - pow(D, 2);
 
-    if (discriminant < 0) {
+    if (discriminant < 0 || a == 0) {
         return {};
     }
-    double x1 = (D*dy + sign(dy)*dx*pow(discriminant, 0.5))/a;
-    double x2 = (D*dy - sign(dy)*dx*pow(discriminant, 0.5))/a;
-    double y1 = (-D*dx + abs(dy)*pow(discriminant, 0.5))/a;
-    double y2 = (-D*dx - abs(dy)*pow(discriminant, 0.5))/a;
+    std::cout << "D: " << D << " disc " << discriminant << " a " << a << std::endl;
+    double x1 = (D*dy + sign(dy)*dx*pow(discriminant, 0.5))/pow(dr, 2);
+    double x2 = (D*dy - sign(dy)*dx*pow(discriminant, 0.5))/pow(dr, 2);
+    double y1 = (-D*dx + abs(dy)*pow(discriminant, 0.5))/pow(dr, 2);
+    double y2 = (-D*dx - abs(dy)*pow(discriminant, 0.5))/pow(dr, 2);
 
     QPointF sol1 = QPointF(x1+curPoint.x(), y1+curPoint.y());
     QPointF sol2 = QPointF(x2+curPoint.x(), y2+curPoint.y());
+
+    std::cout << sol1.x() << ", " << sol1.y() << std::endl;
+    std::cout << sol2.x() << ", " << sol2.y() << std::endl;
 
     return QVector<QPointF>{sol1, sol2};
 
