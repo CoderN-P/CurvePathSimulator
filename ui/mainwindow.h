@@ -57,5 +57,9 @@ public:
 
     Path* path_{};
     void drawAxis() const;
+
+    void animatePurePursuit();
+
+    void animateRamsete();
 };
 

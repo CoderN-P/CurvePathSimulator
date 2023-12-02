@@ -26,6 +26,7 @@ QVariant ControlPointUI::itemChange(GraphicsItemChange change, const QVariant &v
         } else if (ptype == 2) {
             QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
             parentPath->splines[splineIdx].startVelocity = QPointF(convertedPos.x() - spline->start.x(), convertedPos.y() - spline->start.y());
+
         } else if (ptype == 3) {
             QuinticHermiteSpline *spline = &parentPath->splines[splineIdx];
             parentPath->splines[splineIdx].startAcceleration = QPointF(convertedPos.x()-spline->start.x(), convertedPos.y()-spline->start.y());

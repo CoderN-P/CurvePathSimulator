@@ -30,8 +30,21 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
     int xAmount = width / scaleX;
     int yAmount = height / scaleY;
 
+    if (fmod(xAmount, 2) == 1){
+        xAmount -= 1;
+        // w/x - 1 = w/z
+        // w = z(w/x - 1)
+        // z = w/(w/x - 1)
+        scaleX = width/(width/scaleX - 1);
+        scaleY = scaleX;
+    }
 
-    std::cout << xAmount << " " << yAmount << std::endl;
+    if (fmod(yAmount, 2) == 1){
+        yAmount -= 1;
+        scaleY = height/(height/scaleY - 1);
+        scaleX = scaleY;
+    }
+
 
     int xDigits = int(log10(xAmount/2));
     // Check if xAmount is a power of 10 greater than 1
@@ -61,8 +74,10 @@ void Path::drawTicksAndLabels(double scaleX, double scaleY, int width, int heigh
     }
 
 
+
+
     for (int i = 1; i <= yAmount; i++) {
-        if (i == yAmount / 2 || i % int(pow(10, yDigits)) != 0) {
+        if (i == int(yAmount / 2) || i % int(pow(10, yDigits)) != 0) {
             continue;
         }
         if (i < yAmount / 2) {
@@ -401,7 +416,6 @@ void Path::animate(){
     circle->setRect(0, 0, 20, 20);
     circle->setPos(xstart, ystart);
     circle->setZValue(2000);
-    std::cout << xstart << " " << ystart << std::endl;
     circle->setBrush(brush);
     scene->addItem(circle);
 

@@ -16,16 +16,10 @@ double Waypoint::getLinearVelocity(bool useX) const {
 double Waypoint::getAngularVelocity() {
     double dx_dt = getLinearVelocity(true);
     double dy_dt = getLinearVelocity(false);
+    double dy_dt_dt = parentSpline->evaluateDerivative(time, 2, false);
+    double dx_dt_dt = parentSpline->evaluateDerivative(time, 2, true);
 
-    // Check for division by zero to avoid undefined results
-    if (dx_dt != 0.0) {
-        // Calculate angular velocity
-        return dy_dt / dx_dt;
-    } else {
-        // Handle the case where dx/dt is zero (avoid division by zero)
-        // You might want to return a special value or handle this case appropriately
-        return std::numeric_limits<double>::infinity();  // Example: Return infinity for simplicity
-    }
+    return (dx_dt*dy_dt_dt - dy_dt*dx_dt_dt)/pow((pow(dx_dt, 2) + pow(dy_dt, 2)), 1.5);
 }
 
 double Waypoint::getTheta() {

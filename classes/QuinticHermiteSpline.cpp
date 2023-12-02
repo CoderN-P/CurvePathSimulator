@@ -20,27 +20,42 @@ double QuinticHermiteSpline::evaluatePoint(double p, const double (*customBasisF
         order[3] = endAcceleration.y();
         order[4] = endVelocity.y();
         order[5] = end.y();
+
     }
+
+
+
+
 
     double result = 0;
     for (int i = 0; i < 6; i++){
         double temp = 0;
         for (int j = 0; j < 6; j++){
-            temp += (*customBasisFunctions)[i][j] * pow(p, j);
+            if (p == 0 && j == 0){
+                temp += (*customBasisFunctions)[i][j];
+            } else {
+                temp += (*customBasisFunctions)[i][j] * pow(p, j);
+            }
         }
+
         result += temp*order[i];
     }
 
     return result;
 }
 
-double QuinticHermiteSpline::evaluateDerivative(double t, int order, bool x) {
-    order = std::clamp(order, 0, 5);
+double QuinticHermiteSpline::evaluateDerivative(double t, int ord, bool x) {
+    ord = std::clamp(ord, 0, 5);
 
     double customBasisFunctions[6][6];
-    std::memcpy(customBasisFunctions, basisFunctions, sizeof(basisFunctions));
+    // Fill customBasisFunctions with the correct values
+    for (int i = 0; i < 6; i++){
+        for (int j = 0; j < 6; j++){
+            customBasisFunctions[i][j] = basisFunctions[i][j];
+        }
+    }
 
-    for (int o = 0; o < order; o++){
+    for (int o = 0; o < ord; o++){
         for (int i = 0; i < 6; i++){
             for (int j = 0; j < 5-o; j++){
                 customBasisFunctions[i][j] = customBasisFunctions[i][j+1]*(j+1);

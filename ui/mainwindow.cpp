@@ -11,6 +11,7 @@
 #include "../classes/PurePursuitPath.h"
 #include "../classes/RobotPos.h"
 #include "../classes/PurePursuit.h"
+#include "../classes/Ramsete.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -157,6 +158,7 @@ MainWindow::MainWindow(QWidget *parent)
     );
     auto *spline = new QuinticHermiteSpline(QPointF(-2, -2), QPointF(-1, 0), QPointF(0, 1), QPointF(3, 2), QPointF(1, 1), QPointF(0, 1));
 
+
     graphicsView_->setRenderHint(QPainter::Antialiasing, true);
 
     QVector<QuinticHermiteSpline> splineList = {*spline};
@@ -250,8 +252,92 @@ void MainWindow::addSpline() {
 }
 
 void MainWindow::animate() {
+    animateRamsete();
+}
+void MainWindow::animateRamsete() {
+    auto ramsete = new Ramsete(path_, 0.5, 0.7);
+    auto *robotGroup = new QGraphicsItemGroup();
+    double xstart = path_->splines[0].start.x();
+    double ystart = path_->splines[0].start.y();
+    double scaleX = path_->scaleX;
+    double scaleY = path_->scaleY;
+    double width = graphicsView_->width();
+    double height = graphicsView_->height();
+    double x = double(width) / 2 + xstart * (scaleX);
+    double y = double(height) / 2 - ystart * scaleY;
+    auto *robot = new QGraphicsEllipseItem(x-15, y-15, 30, 30);
+    robot->setBrush(QBrush(Qt::red));
+    robot->setPen(QPen(Qt::red));
+    robot->setZValue(2000);
+    // calculate angle of robot
+
+    double theta = atan2(path_->splines[0].startVelocity.y(), path_->splines[0].startVelocity.x())*180/M_PI;
+
+    auto *robotHeading = new QGraphicsLineItem(x, y, x+0.5*scaleX*cos(theta), y-0.5*scaleY*sin(theta));
+    robotHeading->setZValue(2001);
+    robotHeading->setPen(QPen(Qt::gray, 2));
+    robotGroup->addToGroup(robot);
+    robotGroup->addToGroup(robotHeading);
+    graphicsScene_->addItem(robotGroup);
+    auto* robotPos = new RobotPos(xstart, ystart, theta, 0, 0, 0.5);
+    double dt = 50; // ms
+    double curTime = 0;
+    double totalTime = 2000*path_->splines.size(); // How long to run the animation for
+
+    double speed = 2; // feet per second
+
+    // model: 200rpm drive with 18" width
+    //                  rpm   /s  circ   feet
+    double maxLinVelfeet = double(200) / 60 * M_PI*4 / 12;
+    //                  rpm  /s  center angle   deg
+    double maxTurnVelDeg = double(200) / 60 * M_PI*4 / 9 *180/M_PI;
+
+    robotPos->theta = robotPos->theta*180/M_PI;
+
+    while (true){
+        if (curTime > totalTime){
+            break;
+        }
+        QVector<double> data = ramsete->run(robotPos, curTime);
+
+        double linearVelocity = data[0];
+        double angularVelocity = data[1];
+        double stepDist = linearVelocity * dt/1000;
+        std::cout << "theta " << robotPos->theta << " linearVelocity " << linearVelocity << " stepDist " << stepDist << std::endl;
+        robotPos->setX(robotPos->x() + stepDist*cos(robotPos->theta*M_PI/180));
+        robotPos->setY(robotPos->y() + stepDist*sin(robotPos->theta*M_PI/180));
+
+        double newX = robotPos->x()*scaleX + width/2;
+        double newY = -robotPos->y()*scaleY + height/2;
+        robotHeading->setLine(newX, newY, newX+0.5*scaleX*cos(robotPos->theta*M_PI/180), newY-0.5*scaleY*sin(robotPos->theta*M_PI/180));
+
+        // Update robot heading line
+        // Update robot position
+        robot->setRect(newX-15, newY-15, 30, 30);
+        // Update robot angle
+        std::cout << (angularVelocity * dt/1000)*180/M_PI << std::endl;
+        robotPos->theta += (angularVelocity * dt/1000)*180/M_PI;
+
+        /*
+        robotPos->theta = fmod(robotPos->theta, 360);
+
+        if (robotPos->theta < 0) {
+            robotPos->theta += 360;
+        }
+        */
+
+        curTime += dt;
+
+        QCoreApplication::processEvents();
+        QThread::msleep(dt);
+    }
+}
+
+
+void MainWindow::animatePurePursuit(){
     purePursuitPath_ = new PurePursuitPath(path_);
     purePursuitPath_->generateWaypoints(0.33);
+
     double lookaheadDistance = 0.5;
     double linearVelocity = 50;
     double dt = 50; // ms
@@ -306,16 +392,18 @@ void MainWindow::animate() {
 
     // TODO: Fix bug where robot loops in circles at a random point in the path
     while (true) {
-        if (lastFoundIndex > purePursuitPath_->waypoints.size()-2) {
+
+        if (lastFoundIndex >= purePursuitPath_->waypoints.size()-2) {
             break;
         }
-        std::cout << "Last found index: " << lastFoundIndex << std::endl;
+
         QVector<double> data = purePursuit->run(robotPos, lastFoundIndex);
         QPointF goalPoint = QPointF(data[0], data[1]);
         double turnVel = data[2];
-        lastFoundIndex = data[3];
+        lastFoundIndex = int(data[3]);
 
         double stepDist = linearVelocity/100 * maxLinVelfeet * dt/1000;
+        std::cout << "turnVel: " << turnVel << " stepDist" << stepDist << std::endl;
         robotPos->setX(robotPos->x() + stepDist*cos(robotPos->theta*M_PI/180));
         robotPos->setY(robotPos->y() + stepDist*sin(robotPos->theta*M_PI/180));
 
@@ -345,4 +433,3 @@ void MainWindow::animate() {
 
     }
 }
-

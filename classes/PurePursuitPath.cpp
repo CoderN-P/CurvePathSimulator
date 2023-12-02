@@ -43,12 +43,11 @@ void PurePursuitPath::generateWaypoints(double spacing) {
         i++;
     }
 
-    // Add the last point
-    waypoints.append(path->splines[path->splines.size()-1].getWaypoint(1));
-
     // Draw the waypoints
 
+    int j = 0;
     for (Waypoint waypoint : waypoints) {
+        j++;
         QGraphicsScene *scene = path->parent->graphicsScene_;
         double scaleX = path->scaleX;
         double scaleY = path->scaleY;
@@ -81,10 +80,10 @@ QVector<QPointF> PurePursuitPath::findIntersectPoints(QPointF curPoint, QPointF 
     double D = p1.x()*p2.y() - p2.x()*p1.y();
     double discriminant = pow(lookaheadDistance, 2)*pow(dr, 2) - pow(D, 2);
 
-    if (discriminant < 0 || a == 0) {
+    if (discriminant < 0) {
         return {};
     }
-    std::cout << "D: " << D << " disc " << discriminant << " a " << a << std::endl;
+
     double x1 = (D*dy + sign(dy)*dx*pow(discriminant, 0.5))/pow(dr, 2);
     double x2 = (D*dy - sign(dy)*dx*pow(discriminant, 0.5))/pow(dr, 2);
     double y1 = (-D*dx + abs(dy)*pow(discriminant, 0.5))/pow(dr, 2);
@@ -92,9 +91,6 @@ QVector<QPointF> PurePursuitPath::findIntersectPoints(QPointF curPoint, QPointF 
 
     QPointF sol1 = QPointF(x1+curPoint.x(), y1+curPoint.y());
     QPointF sol2 = QPointF(x2+curPoint.x(), y2+curPoint.y());
-
-    std::cout << sol1.x() << ", " << sol1.y() << std::endl;
-    std::cout << sol2.x() << ", " << sol2.y() << std::endl;
 
     return QVector<QPointF>{sol1, sol2};
 
@@ -113,7 +109,7 @@ QVector<double> PurePursuitPath::findGoalPoint(QPointF curPos, double lookaheadD
     bool intersectFound = false;
     int curIndex = lastFoundIndex;
 
-    for (int i = curIndex; i < waypoints.size()-1; i++) {
+    for (int i = lastFoundIndex; i < waypoints.size()-1; i++) {
         Waypoint waypoint = waypoints[i];
         Waypoint nextWaypoint = waypoints[i+1];
         QVector<QPointF> circleIntersect = findIntersectPoints(curPos, QPointF(waypoint.x, waypoint.y), QPointF(nextWaypoint.x, nextWaypoint.y), lookaheadDistance);
@@ -150,20 +146,18 @@ QVector<double> PurePursuitPath::findGoalPoint(QPointF curPos, double lookaheadD
             }
 
             if (distance(goalPoint, QPointF(nextWaypoint.x, nextWaypoint.y)) < distance(curPos, QPointF(nextWaypoint.x, nextWaypoint.y))) {
-                lastFoundIndex = i;
+                curIndex = i;
                 break;
             } else {
-                lastFoundIndex = i+1;
+                curIndex = i+1;
             }
         } else {
             intersectFound = false;
-            goalPoint = QPointF(waypoints[lastFoundIndex].x, waypoints[lastFoundIndex].y);
+            goalPoint = QPointF(waypoints[curIndex].x, waypoints[curIndex].y);
         }
 
-
-        curIndex++;
     }
 
 
-    return {goalPoint.x(), goalPoint.y(), double(lastFoundIndex)};
+    return {goalPoint.x(), goalPoint.y(), double(curIndex)};
 }
