@@ -252,7 +252,7 @@ void MainWindow::addSpline() {
 }
 
 void MainWindow::animate() {
-    animateRamsete();
+    animatePurePursuit();
 }
 void MainWindow::animateRamsete() {
     auto ramsete = new Ramsete(path_, 0.5, 0.7);
@@ -294,10 +294,7 @@ void MainWindow::animateRamsete() {
 
     robotPos->theta = robotPos->theta*180/M_PI;
 
-    while (true){
-        if (curTime > totalTime){
-            break;
-        }
+    while (curTime < totalTime){
         QVector<double> data = ramsete->run(robotPos, curTime);
 
         double linearVelocity = data[0];
@@ -331,14 +328,16 @@ void MainWindow::animateRamsete() {
         QCoreApplication::processEvents();
         QThread::msleep(dt);
     }
+
+
 }
 
 
 void MainWindow::animatePurePursuit(){
     purePursuitPath_ = new PurePursuitPath(path_);
-    purePursuitPath_->generateWaypoints(0.33);
+    purePursuitPath_->generateWaypoints(0.5);
 
-    double lookaheadDistance = 0.5;
+    double lookaheadDistance = 0.3;
     double linearVelocity = 50;
     double dt = 50; // ms
     auto *robotGroup = new QGraphicsItemGroup();
@@ -401,16 +400,22 @@ void MainWindow::animatePurePursuit(){
         QPointF goalPoint = QPointF(data[0], data[1]);
         double turnVel = data[2];
         lastFoundIndex = int(data[3]);
-
+        QPointF oldPos = QPointF(robotPos->x()*scaleX + width/2, -robotPos->y()*scaleY+height/2);
         double stepDist = linearVelocity/100 * maxLinVelfeet * dt/1000;
-        std::cout << "turnVel: " << turnVel << " stepDist" << stepDist << std::endl;
+
         robotPos->setX(robotPos->x() + stepDist*cos(robotPos->theta*M_PI/180));
         robotPos->setY(robotPos->y() + stepDist*sin(robotPos->theta*M_PI/180));
+
 
         double newX = robotPos->x()*scaleX + width/2;
         double newY = -robotPos->y()*scaleY + height/2;
 
+        auto *line = new QGraphicsLineItem(QLineF(QPointF(oldPos.x(), oldPos.y()), QPointF(newX, newY)));
 
+        auto *pathPen = new QPen(Qt::black, 2);
+        line->setPen(*pathPen);
+        line->setZValue(2002);
+        graphicsScene_->addItem(line);
         // Update robot heading line
         robotHeading->setLine(newX, newY, newX+lookaheadDistance*scaleX*cos(robotPos->theta*M_PI/180), newY-lookaheadDistance*scaleY*sin(robotPos->theta*M_PI/180));
         // Update robot position

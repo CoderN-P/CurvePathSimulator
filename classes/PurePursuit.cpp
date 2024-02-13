@@ -25,6 +25,8 @@ double findMinAngle(double absTargetAngle, double curAngle) {
     } else if (diff < -180) {
         diff += 360;
     }
+
+    return diff;
 }
 
 
