@@ -432,7 +432,7 @@ void MainWindow::animatePurePursuit(){
             robotPos->theta += 360;
         }
 
-        if (lastFoundIndex >= purePursuitPath_->waypoints.size()-2) {
+        if (lastFoundIndex >= purePursuitPath_->waypoints.size()-1) {
             break;
         }
 
