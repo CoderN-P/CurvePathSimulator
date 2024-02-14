@@ -392,9 +392,8 @@ void MainWindow::animatePurePursuit(){
     // TODO: Fix bug where robot loops in circles at a random point in the path
     while (true) {
 
-        if (lastFoundIndex >= purePursuitPath_->waypoints.size()-2) {
-            break;
-        }
+
+        std::cout << lastFoundIndex << " " << purePursuitPath_->waypoints.size()-1 << std::endl;
 
         QVector<double> data = purePursuit->run(robotPos, lastFoundIndex);
         QPointF goalPoint = QPointF(data[0], data[1]);
@@ -431,6 +430,10 @@ void MainWindow::animatePurePursuit(){
         robotPos->theta = fmod(robotPos->theta, 360);
         if (robotPos->theta < 0) {
             robotPos->theta += 360;
+        }
+
+        if (lastFoundIndex >= purePursuitPath_->waypoints.size()-2) {
+            break;
         }
 
         QCoreApplication::processEvents();

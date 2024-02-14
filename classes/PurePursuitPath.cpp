@@ -113,6 +113,8 @@ QVector<double> PurePursuitPath::findGoalPoint(QPointF curPos, double lookaheadD
         Waypoint waypoint = waypoints[i];
         Waypoint nextWaypoint = waypoints[i+1];
         QVector<QPointF> circleIntersect = findIntersectPoints(curPos, QPointF(waypoint.x, waypoint.y), QPointF(nextWaypoint.x, nextWaypoint.y), lookaheadDistance);
+
+
         if (circleIntersect.empty()) {
             continue;
         }
@@ -125,9 +127,9 @@ QVector<double> PurePursuitPath::findGoalPoint(QPointF curPos, double lookaheadD
         double minY = std::min(waypoint.y, nextWaypoint.y);
         double maxY = std::max(waypoint.y, nextWaypoint.y);
 
-        if ((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) || (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)) {
+        if (((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) && (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)) || ((circleIntersect[1].x() >= minX && circleIntersect[1].x() <= maxX) && (circleIntersect[1].y() >= minY && circleIntersect[1].y() <= maxY))) {
             intersectFound = true;
-            if ((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) && (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)){
+            if (((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) && (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)) && ((circleIntersect[1].x() >= minX && circleIntersect[1].x() <= maxX) && (circleIntersect[1].y() >= minY && circleIntersect[1].y() <= maxY))) {
                 // Both x and y are in the range
                 // Choose the one that is closer to the next waypoint
                 if (distance(circleIntersect[0], QPointF(nextWaypoint.x, nextWaypoint.y)) < distance(circleIntersect[1], QPointF(nextWaypoint.x, nextWaypoint.y))) {
@@ -138,26 +140,26 @@ QVector<double> PurePursuitPath::findGoalPoint(QPointF curPos, double lookaheadD
 
             } else {
                 // Only one of x and y is in the range
-                if (circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) {
+                if ((circleIntersect[0].x() >= minX && circleIntersect[0].x() <= maxX) && (circleIntersect[0].y() >= minY && circleIntersect[0].y() <= maxY)) {
                     goalPoint = circleIntersect[0];
                 } else {
                     goalPoint = circleIntersect[1];
                 }
             }
 
-            if (distance(goalPoint, QPointF(nextWaypoint.x, nextWaypoint.y)) < distance(curPos, QPointF(nextWaypoint.x, nextWaypoint.y))) {
+            if (distance(goalPoint, QPointF(nextWaypoint.x, nextWaypoint.y)) <= distance(curPos, QPointF(nextWaypoint.x, nextWaypoint.y))) {
                 curIndex = i;
                 break;
             } else {
                 curIndex = i+1;
             }
-        } else {
-            intersectFound = false;
-            goalPoint = QPointF(waypoints[curIndex].x, waypoints[curIndex].y);
         }
-
     }
 
+    if (!intersectFound){
+
+        goalPoint = QPointF(waypoints[curIndex].x, waypoints[curIndex].y);
+    }
 
     return {goalPoint.x(), goalPoint.y(), double(curIndex)};
 }
